@@ -33,7 +33,9 @@ import {
 } from "@/features/auth/authSlice";
 import { useListPartiesQuery } from "@/features/parties/partiesApi";
 import { PartyType } from "@/features/parties/types";
+import { DepartmentBalancesPanel } from "@/features/parties/components/DepartmentBalancesPanel";
 import { DepartmentVehicleSelect } from "@/features/vehicles/components/DepartmentVehicleSelect";
+import { InvoiceButton } from "@/features/invoices/components/InvoiceButton";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { DepartmentCode, Role } from "@/types/enums";
 import type {
@@ -95,6 +97,7 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
     role === Role.OWNER ||
     role === Role.ACCOUNTANT ||
     (role === Role.DEPARTMENT_STAFF && department === DepartmentCode.SUPPLY);
+  const canInvoice = role === Role.OWNER || role === Role.ACCOUNTANT;
   const [createPurchase, purchaseState] = useCreateSupplyPurchaseMutation();
   const [createSale, saleState] = useCreateSupplySaleMutation();
   const [cancelPurchase] = useDeleteSupplyPurchaseMutation();
@@ -106,7 +109,17 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
     {
       id: "party",
       header: kind === "purchase" ? "Broker" : "Shop owner",
-      cell: (row) => row.party?.name ?? "—",
+      cell: (row) =>
+        row.partyId ? (
+          <a
+            className="font-medium text-primary hover:underline"
+            href={`/parties/${row.partyId}`}
+          >
+            {row.party?.name ?? "View statement"}
+          </a>
+        ) : (
+          (row.party?.name ?? "—")
+        ),
     },
     {
       id: "quantity",
@@ -153,7 +166,7 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
     },
     {
       id: "outstanding",
-      header: "Outstanding",
+      header: kind === "purchase" ? "Initial payable" : "Initial receivable",
       cell: (row) => money.format(Number(row.outstandingAmount)),
       align: "right",
     },
@@ -179,25 +192,37 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
             id: "actions",
             header: "Actions",
             align: "right" as const,
-            cell: (row: SupplyPurchase | SupplySale) =>
-              row.status === "posted" ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const mutation =
-                      kind === "purchase"
-                        ? cancelPurchase(row.id)
-                        : cancelSale(row.id);
-                    void mutation
-                      .unwrap()
-                      .then(() => toast.success(`${kind} cancelled`))
-                      .catch((error) => toast.error(getApiErrorMessage(error)));
-                  }}
-                >
-                  Cancel
-                </Button>
-              ) : null,
+            cell: (row: SupplyPurchase | SupplySale) => (
+              <div className="flex justify-end gap-2">
+                {canInvoice ? (
+                  <InvoiceButton
+                    sourceType={kind}
+                    sourceId={row.id}
+                    label="Print"
+                  />
+                ) : null}
+                {row.status === "posted" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const mutation =
+                        kind === "purchase"
+                          ? cancelPurchase(row.id)
+                          : cancelSale(row.id);
+                      void mutation
+                        .unwrap()
+                        .then(() => toast.success(`${kind} cancelled`))
+                        .catch((error) =>
+                          toast.error(getApiErrorMessage(error)),
+                        );
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                ) : null}
+              </div>
+            ),
           },
         ]
       : []),
@@ -231,6 +256,7 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
           ) : undefined
         }
       />
+      <DepartmentBalancesPanel departmentCode={DepartmentCode.SUPPLY} />
       <div className="grid gap-3 sm:grid-cols-3">
         <div>
           <Label htmlFor={`${kind}-from`}>From</Label>
@@ -378,6 +404,12 @@ function TransactionDialog({
       );
       return;
     }
+    if (parsed.data.paymentAmount < preview && !partyId) {
+      setError(
+        `Select a ${kind === "purchase" ? "broker" : "shop owner"} when an outstanding balance remains.`,
+      );
+      return;
+    }
     const common = {
       partyId: partyId || undefined,
       quantityKg: parsed.data.quantityKg,
@@ -503,7 +535,11 @@ function TransactionDialog({
           </div>
           <div>
             <Label>Vehicle</Label>
-            <DepartmentVehicleSelect departmentCode={DepartmentCode.SUPPLY} value={vehicleId} onChange={setVehicleId} />
+            <DepartmentVehicleSelect
+              departmentCode={DepartmentCode.SUPPLY}
+              value={vehicleId}
+              onChange={setVehicleId}
+            />
           </div>
           <div>
             <Label htmlFor={`${kind}-notes`}>Notes</Label>
@@ -515,7 +551,14 @@ function TransactionDialog({
           </div>
           <p className="text-sm text-muted-foreground sm:col-span-2">
             Preview total:{" "}
-            {money.format(Number.isFinite(preview) ? preview : 0)}
+            {money.format(Number.isFinite(preview) ? preview : 0)}; outstanding:{" "}
+            {money.format(
+              Math.max(
+                (Number.isFinite(preview) ? preview : 0) -
+                  (Number(payment) || 0),
+                0,
+              ),
+            )}
           </p>
           <DialogFooter className="sm:col-span-2">
             <Button type="button" variant="outline" onClick={onClose}>

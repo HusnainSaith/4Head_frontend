@@ -13,6 +13,7 @@ export interface ShopSale {
   totalAmount: string;
   paymentMethod: "cash" | "bank" | "credit";
   amountReceived: string;
+  outstandingAmount: string;
   saleDate: string;
   notes?: string | null;
   createdAt: string;
@@ -26,6 +27,7 @@ export interface CreateSaleRequest {
   quantityKg: number;
   ratePerKg: number;
   paymentMethod: "cash" | "bank" | "credit";
+  amountReceived?: number;
   saleDate: string;
   notes?: string;
 }

@@ -1,4 +1,5 @@
 import { apiSlice } from "@/store/apiSlice";
+import type { ApiResponse } from "@/types/api";
 import type {
   CreatePartyRequest,
   DeletePartyResponse,
@@ -9,6 +10,7 @@ import type {
   PartyStatementResponse,
   RecordPaymentRequest,
   RecordPaymentResponse,
+  DepartmentBalances,
   UpdatePartyRequest,
 } from "@/features/parties/types";
 
@@ -82,6 +84,25 @@ export const partiesApi = apiSlice.injectEndpoints({
         { type: "Party", id },
         { type: "Party", id: "LIST" },
         { type: "PartyStatement", id },
+        { type: "DepartmentBalance", id: "LIST" },
+      ],
+    }),
+    getDepartmentBalances: builder.query<
+      ApiResponse<DepartmentBalances>,
+      string
+    >({
+      query: (departmentType) =>
+        `/departments/${departmentType}/party-balances`,
+      providesTags: (result) => [
+        { type: "DepartmentBalance", id: "LIST" },
+        ...(result?.data.departmentId
+          ? [
+              {
+                type: "DepartmentBalance" as const,
+                id: result.data.departmentId,
+              },
+            ]
+          : []),
       ],
     }),
   }),
@@ -95,4 +116,5 @@ export const {
   useDeletePartyMutation,
   useGetPartyStatementQuery,
   useRecordPartyPaymentMutation,
+  useGetDepartmentBalancesQuery,
 } = partiesApi;

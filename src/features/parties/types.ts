@@ -89,11 +89,27 @@ export interface PartyStatement {
 
 /** Backend payment endpoint DTO. */
 export interface RecordPaymentRequest {
+  departmentId?: string;
   amount: number;
   direction: "received" | "paid";
   paymentDate: string;
   paymentMethod: "cash" | "bank";
   notes?: string;
+}
+
+export interface DepartmentPartyBalance {
+  partyId: string;
+  partyName: string;
+  partyType: string;
+  /** Positive means receivable; negative means payable. */
+  balance: string;
+}
+
+export interface DepartmentBalances {
+  departmentId: string;
+  totalReceivable: string;
+  totalPayable: string;
+  parties: DepartmentPartyBalance[];
 }
 
 export interface RecordPaymentResponseData {

@@ -3,59 +3,113 @@ import { Provider } from "react-redux";
 import { fireEvent, render, screen } from "@testing-library/react";
 import authReducer, { credentialsSet } from "@/features/auth/authSlice";
 import { apiSlice } from "@/store/apiSlice";
+import { PartyType } from "@/features/parties/types";
 import { ownerUser, authenticatedState } from "@/test/auth-fixtures";
 import { IncomingTransfersPage } from "./IncomingTransfersPage";
 import { ShopSalesPage } from "./ShopSalesPage";
 import { ShopStockPage } from "./ShopStockPage";
+
+vi.mock("@/features/parties/components/DepartmentBalancesPanel", () => ({
+  DepartmentBalancesPanel: () => null,
+}));
 import { ShopReportPage } from "./ShopReportPage";
 
-const { mockSale, mockTransfer, mockStock, mockReport } = vi.hoisted(() => ({
-  mockSale: {
-    id: "sale1",
-    customerParty: { id: "c1", name: "Walk-in Customer", partyType: "customer" },
-    customerPartyId: "c1",
-    quantityKg: "5.000",
-    ratePerKg: "350.00",
-    profitMarginPerKg: "50.00",
-    totalAmount: "1750.00",
-    paymentMethod: "cash" as const,
-    amountReceived: "1750.00",
-    saleDate: "2026-07-12",
-    departmentId: "dept1",
-    createdAt: "2026-07-12T00:00:00Z",
-    updatedAt: "2026-07-12T00:00:00Z",
-  },
-  mockTransfer: {
-    id: "t1",
-    fromDepartmentId: "supply1",
-    toDepartmentId: "shop1",
-    quantityKg: "10.000",
-    internalRatePerKg: "280.00",
-    totalAmount: "2800.00",
-    amountSettled: "1000.00",
-    remainingBalance: "1800.00",
-    settlementStatus: "partially_settled" as const,
-    transferDate: "2026-07-10",
-  },
-  mockStock: { id: "sb1", productId: "p1", departmentId: "dept1", quantityKg: "42.500", wac: "290.00" },
-  mockReport: { revenue: "50000.00", cogs: "30000.00", operatingExpenses: "5000.00", payrollExpenses: "3000.00", netProfit: "12000.00" },
-}));
+const { mockSale, mockTransfer, mockStock, mockReport, mockListPartiesQuery } =
+  vi.hoisted(() => ({
+    mockListPartiesQuery: vi.fn(() => ({
+      data: {
+        data: {
+          items: [
+            { id: "c1", name: "Walk-in Customer", partyType: "customer" },
+          ],
+        },
+      },
+    })),
+    mockSale: {
+      id: "sale1",
+      customerParty: {
+        id: "c1",
+        name: "Walk-in Customer",
+        partyType: "customer",
+      },
+      customerPartyId: "c1",
+      quantityKg: "5.000",
+      ratePerKg: "350.00",
+      profitMarginPerKg: "50.00",
+      totalAmount: "1750.00",
+      paymentMethod: "cash" as const,
+      amountReceived: "1750.00",
+      outstandingAmount: "0.00",
+      saleDate: "2026-07-12",
+      departmentId: "dept1",
+      createdAt: "2026-07-12T00:00:00Z",
+      updatedAt: "2026-07-12T00:00:00Z",
+    },
+    mockTransfer: {
+      id: "t1",
+      fromDepartmentId: "supply1",
+      toDepartmentId: "shop1",
+      quantityKg: "10.000",
+      internalRatePerKg: "280.00",
+      totalAmount: "2800.00",
+      amountSettled: "1000.00",
+      remainingBalance: "1800.00",
+      settlementStatus: "partially_settled" as const,
+      transferDate: "2026-07-10",
+    },
+    mockStock: {
+      id: "sb1",
+      productId: "p1",
+      departmentId: "dept1",
+      quantityKg: "42.500",
+      wac: "290.00",
+    },
+    mockReport: {
+      revenue: "50000.00",
+      cogs: "30000.00",
+      operatingExpenses: "5000.00",
+      payrollExpenses: "3000.00",
+      netProfit: "12000.00",
+    },
+  }));
 
 vi.mock("@/features/parties/partiesApi", () => ({
-  useListPartiesQuery: vi.fn(() => ({ data: { data: { items: [{ id: "c1", name: "Walk-in Customer", partyType: "customer" }] } } })),
+  useListPartiesQuery: mockListPartiesQuery,
   useCreatePartyMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 vi.mock("@/features/fresh-chicken-shop/shopApi", () => ({
-  useGetShopIncomingTransfersQuery: vi.fn(() => ({ data: { data: [mockTransfer] }, isLoading: false, isError: false })),
-  useListShopSalesQuery: vi.fn(() => ({ data: { data: [mockSale] }, isLoading: false, isError: false })),
-  useCreateShopSaleMutation: vi.fn(() => [vi.fn().mockResolvedValue({ data: mockSale }), { isLoading: false }]),
+  useGetShopIncomingTransfersQuery: vi.fn(() => ({
+    data: { data: [mockTransfer] },
+    isLoading: false,
+    isError: false,
+  })),
+  useListShopSalesQuery: vi.fn(() => ({
+    data: { data: [mockSale] },
+    isLoading: false,
+    isError: false,
+  })),
+  useCreateShopSaleMutation: vi.fn(() => [
+    vi.fn().mockResolvedValue({ data: mockSale }),
+    { isLoading: false },
+  ]),
   useUpdateShopSaleMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
   useDeleteShopSaleMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
-  useGetShopStockQuery: vi.fn(() => ({ data: { data: mockStock }, isLoading: false, isError: false })),
-  useCreateShopStockWriteoffMutation: vi.fn(() => [vi.fn().mockResolvedValue({ data: { valuationAmount: "580.00" } }), { isLoading: false }]),
-  useGetShopProfitLossQuery: vi.fn(() => ({ data: { data: mockReport }, isLoading: false, isError: false })),
+  useGetShopStockQuery: vi.fn(() => ({
+    data: { data: mockStock },
+    isLoading: false,
+    isError: false,
+  })),
+  useCreateShopStockWriteoffMutation: vi.fn(() => [
+    vi.fn().mockResolvedValue({ data: { valuationAmount: "580.00" } }),
+    { isLoading: false },
+  ]),
+  useGetShopProfitLossQuery: vi.fn(() => ({
+    data: { data: mockReport },
+    isLoading: false,
+    isError: false,
+  })),
 }));
 
 function buildStore() {
@@ -83,13 +137,19 @@ describe("IncomingTransfersPage", () => {
 
   it("has no create/settle action buttons", () => {
     wrap(<IncomingTransfersPage />);
-    expect(screen.queryByRole("button", { name: /new transfer/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /settle/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /new transfer/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /settle/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows caption directing users to Supply side", () => {
     wrap(<IncomingTransfersPage />);
-    expect(screen.getByText(/Supply → Internal Transfers/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Supply → Internal Transfers/i),
+    ).toBeInTheDocument();
   });
 });
 
@@ -105,6 +165,16 @@ describe("ShopSalesPage", () => {
     wrap(<ShopSalesPage />);
     fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
     expect(screen.getByText(/Available stock: 42.500 kg/i)).toBeInTheDocument();
+  });
+
+  it("requests customers within the backend pagination limit", () => {
+    wrap(<ShopSalesPage />);
+    fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
+
+    expect(mockListPartiesQuery).toHaveBeenCalledWith(
+      { type: PartyType.CUSTOMER, limit: 100 },
+      { skip: false },
+    );
   });
 
   it("shows insufficient-stock error when quantity exceeds available", () => {
@@ -131,7 +201,9 @@ describe("ShopStockPage", () => {
   it("renders stock stats and caption about internal transfers", () => {
     wrap(<ShopStockPage />);
     expect(screen.getByText("42.500 kg")).toBeInTheDocument();
-    expect(screen.getByText(/internal transfers from Supply/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/internal transfers from Supply/i),
+    ).toBeInTheDocument();
   });
 
   it("opens write-off dialog", () => {

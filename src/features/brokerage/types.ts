@@ -30,6 +30,7 @@ interface BrokerageBase {
   ratePerKg: string;
   totalAmount: string;
   amountPaid: string;
+  outstandingAmount: string;
   paymentMethod: BrokeragePaymentMethod;
   description: string | null;
   status: BrokeragePurchaseStatus;
@@ -63,7 +64,9 @@ export interface PaginatedData<T> {
   pagination: PaginationMeta;
 }
 
-export type PaginatedPurchasesResponse = ApiResponse<PaginatedData<BrokeragePurchase>>;
+export type PaginatedPurchasesResponse = ApiResponse<
+  PaginatedData<BrokeragePurchase>
+>;
 export type PaginatedSalesResponse = ApiResponse<PaginatedData<BrokerageSale>>;
 export type PurchaseResponse = ApiResponse<BrokeragePurchase>;
 export type SaleResponse = ApiResponse<BrokerageSale>;
@@ -127,10 +130,7 @@ export interface BrokerageStockBalance {
 }
 
 export type StockWriteoffReason =
-  | "spoilage"
-  | "mortality"
-  | "transit_loss"
-  | "other";
+  "spoilage" | "mortality" | "transit_loss" | "other";
 
 export interface StockWriteoffRequest {
   departmentId: string;

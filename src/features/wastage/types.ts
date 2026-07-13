@@ -21,12 +21,14 @@ interface WastageTransactionBase {
 
 export interface WastagePurchase extends WastageTransactionBase {
   amountPaid: string;
+  outstandingAmount: string;
   purchaseDate: string;
 }
 
 export interface WastageSale extends WastageTransactionBase {
   commissionPerKg: string;
   amountReceived: string;
+  outstandingAmount: string;
   saleDate: string;
 }
 
@@ -35,6 +37,7 @@ export interface CreatePurchaseRequest {
   partyId?: string;
   quantityKg: number;
   ratePerKg: number;
+  amountPaid?: number;
   paymentMethod: WastagePaymentMethod;
   purchaseDate: string;
   vehicleId?: string;
@@ -70,7 +73,10 @@ export interface ProfitLossReport {
   netProfit: string;
 }
 
-export interface ProfitLossParams { from?: string; to?: string }
+export interface ProfitLossParams {
+  from?: string;
+  to?: string;
+}
 export type UpdatePurchaseRequest = Partial<CreatePurchaseRequest>;
 export type UpdateSaleRequest = Partial<CreateSaleRequest>;
 export type PurchasesResponse = ApiResponse<WastagePurchase[]>;

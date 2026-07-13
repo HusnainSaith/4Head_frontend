@@ -33,7 +33,7 @@ vi.mock("@/store/apiSlice", async () => {
         }
         return { data: { success: true, data: [] } };
       },
-      tagTypes: ["Party", "PartyStatement"] as const,
+      tagTypes: ["Party", "PartyStatement", "DepartmentBalance"] as const,
       endpoints: () => ({}),
     }),
   };
@@ -166,6 +166,7 @@ describe("partiesApi — query builders", () => {
 
     it("forwards the payment body verbatim", async () => {
       const payload = {
+        departmentId: "dept-1",
         amount: 500,
         direction: "received" as const,
         paymentDate: "2025-01-15",
@@ -178,6 +179,38 @@ describe("partiesApi — query builders", () => {
         }),
       );
       expect(captured[0].body).toMatchObject(payload);
+    });
+
+    it("invalidates and refetches the department balance", async () => {
+      await dispatch(
+        partiesApi.endpoints.getDepartmentBalances.initiate("wastage"),
+      );
+      expect(
+        captured.filter(
+          (request) => request.url === "/departments/wastage/party-balances",
+        ),
+      ).toHaveLength(1);
+
+      await dispatch(
+        partiesApi.endpoints.recordPartyPayment.initiate({
+          id: "party-balance",
+          body: {
+            departmentId: "dept-1",
+            amount: 50,
+            direction: "paid",
+            paymentDate: "2025-01-01",
+            paymentMethod: "cash",
+          },
+        }),
+      );
+
+      await vi.waitFor(() => {
+        expect(
+          captured.filter(
+            (request) => request.url === "/departments/wastage/party-balances",
+          ),
+        ).toHaveLength(2);
+      });
     });
 
     it("invalidates and refetches the matching party statement", async () => {
@@ -211,6 +244,15 @@ describe("partiesApi — query builders", () => {
           ),
         ).toHaveLength(2);
       });
+    });
+  });
+
+  describe("getDepartmentBalances", () => {
+    it("builds the department-scoped balance URL", async () => {
+      await dispatch(
+        partiesApi.endpoints.getDepartmentBalances.initiate("brokerage"),
+      );
+      expect(captured[0].url).toBe("/departments/brokerage/party-balances");
     });
   });
 

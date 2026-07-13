@@ -1,5 +1,7 @@
 import type { SessionUser } from "@/features/auth/types";
 import { LogOut } from "lucide-react";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
+import { Role } from "@/types/enums";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +36,8 @@ export function Topbar({
       {/* Page context slot — empty for now, keeps layout balanced */}
       <div />
 
+      <div className="flex items-center gap-2">
+      {user.role?.name === Role.OWNER || user.role?.name === Role.ACCOUNTANT ? <NotificationBell /> : null}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -70,6 +74,7 @@ export function Topbar({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </header>
   );
 }

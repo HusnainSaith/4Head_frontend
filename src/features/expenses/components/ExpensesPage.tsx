@@ -30,6 +30,7 @@ import {
   selectUserRole,
 } from "@/features/auth/authSlice";
 import { useListDepartmentsQuery } from "@/features/vehicles/vehiclesApi";
+import { InvoiceButton } from "@/features/invoices/components/InvoiceButton";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { Role } from "@/types/enums";
 import {
@@ -93,6 +94,15 @@ export function ExpensesPage() {
       header: "Description",
       cell: (e) => e.description ?? "—",
     },
+    ...(management
+      ? [{
+          id: "actions",
+          header: "Actions",
+          cell: (expense: Expense) => (
+            <InvoiceButton sourceType="expense" sourceId={expense.id} label="Print" />
+          ),
+        }]
+      : []),
   ];
   if (query.isLoading) return <PageSkeleton rows={6} />;
   if (query.isError)

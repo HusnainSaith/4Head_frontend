@@ -18,48 +18,96 @@ import type {
   UpdateSaleRequest,
 } from "./types";
 
-const cleanParams = <T extends Record<string, unknown>>(params: T): Partial<T> =>
+const cleanParams = <T extends Record<string, unknown>>(
+  params: T,
+): Partial<T> =>
   Object.fromEntries(
-    Object.entries(params).filter(([, v]) => v !== undefined && v !== "" && v !== null),
+    Object.entries(params).filter(
+      ([, v]) => v !== undefined && v !== "" && v !== null,
+    ),
   ) as Partial<T>;
 
 const refreshTransactionState = [
   { type: "BrokerageStock" as const, id: "CURRENT" },
   { type: "BrokerageReport" as const, id: "PROFIT_LOSS" },
   { type: "BrokerageStockMovement" as const, id: "LIST" },
+  { type: "DepartmentBalance" as const, id: "LIST" },
 ];
 
 export const brokerageApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    listBrokeragePurchases: builder.query<PaginatedPurchasesResponse, PurchaseListQuery | void>({
-      query: (params) => ({ url: "/brokerage/purchases", params: params ? cleanParams(params as Record<string, unknown>) : undefined }),
+    listBrokeragePurchases: builder.query<
+      PaginatedPurchasesResponse,
+      PurchaseListQuery | void
+    >({
+      query: (params) => ({
+        url: "/brokerage/purchases",
+        params: params
+          ? cleanParams(params as Record<string, unknown>)
+          : undefined,
+      }),
       providesTags: (result) => [
         { type: "BrokeragePurchase", id: "LIST" },
-        ...(result?.data?.items?.map(({ id }) => ({ type: "BrokeragePurchase" as const, id })) ?? []),
+        ...(result?.data?.items?.map(({ id }) => ({
+          type: "BrokeragePurchase" as const,
+          id,
+        })) ?? []),
       ],
     }),
     getBrokeragePurchase: builder.query<PurchaseResponse, string>({
       query: (id) => `/brokerage/purchases/${id}`,
       providesTags: (_r, _e, id) => [{ type: "BrokeragePurchase", id }],
     }),
-    createBrokeragePurchase: builder.mutation<PurchaseResponse, CreatePurchaseRequest>({
+    createBrokeragePurchase: builder.mutation<
+      PurchaseResponse,
+      CreatePurchaseRequest
+    >({
       query: (body) => ({ url: "/brokerage/purchases", method: "POST", body }),
-      invalidatesTags: [{ type: "BrokeragePurchase", id: "LIST" }, ...refreshTransactionState],
+      invalidatesTags: [
+        { type: "BrokeragePurchase", id: "LIST" },
+        ...refreshTransactionState,
+      ],
     }),
-    updateBrokeragePurchase: builder.mutation<PurchaseResponse, { id: string; body: UpdatePurchaseRequest }>({
-      query: ({ id, body }) => ({ url: `/brokerage/purchases/${id}`, method: "PATCH", body }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "BrokeragePurchase", id }, { type: "BrokeragePurchase", id: "LIST" }, ...refreshTransactionState],
+    updateBrokeragePurchase: builder.mutation<
+      PurchaseResponse,
+      { id: string; body: UpdatePurchaseRequest }
+    >({
+      query: ({ id, body }) => ({
+        url: `/brokerage/purchases/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "BrokeragePurchase", id },
+        { type: "BrokeragePurchase", id: "LIST" },
+        ...refreshTransactionState,
+      ],
     }),
     deleteBrokeragePurchase: builder.mutation<ApiResponse<void>, string>({
       query: (id) => ({ url: `/brokerage/purchases/${id}`, method: "DELETE" }),
-      invalidatesTags: (_r, _e, id) => [{ type: "BrokeragePurchase", id }, { type: "BrokeragePurchase", id: "LIST" }, ...refreshTransactionState],
+      invalidatesTags: (_r, _e, id) => [
+        { type: "BrokeragePurchase", id },
+        { type: "BrokeragePurchase", id: "LIST" },
+        ...refreshTransactionState,
+      ],
     }),
 
-    listBrokerageSales: builder.query<PaginatedSalesResponse, SaleListQuery | void>({
-      query: (params) => ({ url: "/brokerage/sales", params: params ? cleanParams(params as Record<string, unknown>) : undefined }),
+    listBrokerageSales: builder.query<
+      PaginatedSalesResponse,
+      SaleListQuery | void
+    >({
+      query: (params) => ({
+        url: "/brokerage/sales",
+        params: params
+          ? cleanParams(params as Record<string, unknown>)
+          : undefined,
+      }),
       providesTags: (result) => [
         { type: "BrokerageSale", id: "LIST" },
-        ...(result?.data?.items?.map(({ id }) => ({ type: "BrokerageSale" as const, id })) ?? []),
+        ...(result?.data?.items?.map(({ id }) => ({
+          type: "BrokerageSale" as const,
+          id,
+        })) ?? []),
       ],
     }),
     getBrokerageSale: builder.query<SaleResponse, string>({
@@ -68,32 +116,62 @@ export const brokerageApi = apiSlice.injectEndpoints({
     }),
     createBrokerageSale: builder.mutation<SaleResponse, CreateSaleRequest>({
       query: (body) => ({ url: "/brokerage/sales", method: "POST", body }),
-      invalidatesTags: [{ type: "BrokerageSale", id: "LIST" }, ...refreshTransactionState],
+      invalidatesTags: [
+        { type: "BrokerageSale", id: "LIST" },
+        ...refreshTransactionState,
+      ],
     }),
-    updateBrokerageSale: builder.mutation<SaleResponse, { id: string; body: UpdateSaleRequest }>({
-      query: ({ id, body }) => ({ url: `/brokerage/sales/${id}`, method: "PATCH", body }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "BrokerageSale", id }, { type: "BrokerageSale", id: "LIST" }, ...refreshTransactionState],
+    updateBrokerageSale: builder.mutation<
+      SaleResponse,
+      { id: string; body: UpdateSaleRequest }
+    >({
+      query: ({ id, body }) => ({
+        url: `/brokerage/sales/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "BrokerageSale", id },
+        { type: "BrokerageSale", id: "LIST" },
+        ...refreshTransactionState,
+      ],
     }),
     deleteBrokerageSale: builder.mutation<ApiResponse<void>, string>({
       query: (id) => ({ url: `/brokerage/sales/${id}`, method: "DELETE" }),
-      invalidatesTags: (_r, _e, id) => [{ type: "BrokerageSale", id }, { type: "BrokerageSale", id: "LIST" }, ...refreshTransactionState],
+      invalidatesTags: (_r, _e, id) => [
+        { type: "BrokerageSale", id },
+        { type: "BrokerageSale", id: "LIST" },
+        ...refreshTransactionState,
+      ],
     }),
 
     getBrokerageStock: builder.query<ApiResponse<BrokerageStockBalance>, void>({
       query: () => "/brokerage/stock",
       providesTags: [{ type: "BrokerageStock", id: "CURRENT" }],
     }),
-    createBrokerageStockWriteoff: builder.mutation<ApiResponse<StockWriteoffResponse>, StockWriteoffRequest>({
-      query: (body) => ({ url: "/brokerage/stock/writeoffs", method: "POST", body }),
+    createBrokerageStockWriteoff: builder.mutation<
+      ApiResponse<StockWriteoffResponse>,
+      StockWriteoffRequest
+    >({
+      query: (body) => ({
+        url: "/brokerage/stock/writeoffs",
+        method: "POST",
+        body,
+      }),
       invalidatesTags: [
         ...refreshTransactionState,
         { type: "Expense", id: "LIST" },
       ],
     }),
-    getBrokerageProfitLoss: builder.query<ApiResponse<BrokerageProfitLoss>, ProfitLossParams | void>({
+    getBrokerageProfitLoss: builder.query<
+      ApiResponse<BrokerageProfitLoss>,
+      ProfitLossParams | void
+    >({
       query: (params) => ({
         url: "/brokerage/reports/profit-loss",
-        params: params ? cleanParams({ from: params.from, to: params.to }) : undefined,
+        params: params
+          ? cleanParams({ from: params.from, to: params.to })
+          : undefined,
       }),
       providesTags: [{ type: "BrokerageReport", id: "PROFIT_LOSS" }],
     }),
@@ -101,10 +179,17 @@ export const brokerageApi = apiSlice.injectEndpoints({
 });
 
 export const {
-  useListBrokeragePurchasesQuery, useGetBrokeragePurchaseQuery,
-  useCreateBrokeragePurchaseMutation, useUpdateBrokeragePurchaseMutation, useDeleteBrokeragePurchaseMutation,
-  useListBrokerageSalesQuery, useGetBrokerageSaleQuery,
-  useCreateBrokerageSaleMutation, useUpdateBrokerageSaleMutation, useDeleteBrokerageSaleMutation,
-  useGetBrokerageStockQuery, useCreateBrokerageStockWriteoffMutation,
+  useListBrokeragePurchasesQuery,
+  useGetBrokeragePurchaseQuery,
+  useCreateBrokeragePurchaseMutation,
+  useUpdateBrokeragePurchaseMutation,
+  useDeleteBrokeragePurchaseMutation,
+  useListBrokerageSalesQuery,
+  useGetBrokerageSaleQuery,
+  useCreateBrokerageSaleMutation,
+  useUpdateBrokerageSaleMutation,
+  useDeleteBrokerageSaleMutation,
+  useGetBrokerageStockQuery,
+  useCreateBrokerageStockWriteoffMutation,
   useGetBrokerageProfitLossQuery,
 } = brokerageApi;

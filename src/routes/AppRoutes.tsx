@@ -57,6 +57,8 @@ const SalaryRunsPage = lazy(() => import("@/features/employees/components").then
 const SalaryRunDetailPage = lazy(() => import("@/features/employees/components").then((m) => ({ default: m.SalaryRunDetailPage })));
 const ExpensesPage = lazy(() => import("@/features/expenses/components").then((m) => ({ default: m.ExpensesPage })));
 const UsersListPage = lazy(() => import("@/features/users/components").then((m) => ({ default: m.UsersListPage })));
+const InvoicesListPage = lazy(() => import("@/features/invoices/components").then((m) => ({ default: m.InvoicesListPage })));
+const NotificationsListPage = lazy(() => import("@/features/notifications/components").then((m) => ({ default: m.NotificationsListPage })));
 const ConsolidatedPnLPage=lazy(()=>import("@/features/reports/components").then((m)=>({default:m.ConsolidatedPnLPage})));const PartnerProfitSharePage=lazy(()=>import("@/features/reports/components").then((m)=>({default:m.PartnerProfitSharePage})));const OutstandingBalancesPage=lazy(()=>import("@/features/reports/components").then((m)=>({default:m.OutstandingBalancesPage})));const StockSummaryPage=lazy(()=>import("@/features/reports/components").then((m)=>({default:m.StockSummaryPage})));const ExpenseBreakdownPage=lazy(()=>import("@/features/reports/components").then((m)=>({default:m.ExpenseBreakdownPage})));const PayrollSummaryPage=lazy(()=>import("@/features/reports/components").then((m)=>({default:m.PayrollSummaryPage})));
 const ShopIncomingTransfersPage = lazy(() => import("@/features/fresh-chicken-shop/components/IncomingTransfersPage").then((m) => ({ default: m.IncomingTransfersPage })));
 const ShopSalesPage = lazy(() => import("@/features/fresh-chicken-shop/components/ShopSalesPage").then((m) => ({ default: m.ShopSalesPage })));
@@ -156,6 +158,8 @@ export function AppRoutes() {
           <Route path="payroll/runs/new" element={<RoleGuard allowedRoles={managementRoles}><RunPayrollPage /></RoleGuard>} />
           <Route path="payroll/runs/:id" element={<RoleGuard allowedRoles={managementRoles}><SalaryRunDetailPage /></RoleGuard>} />
           <Route path="expenses" element={<RoleGuard allowedRoles={partyRoles}><ExpensesPage /></RoleGuard>} />
+          <Route path="invoices" element={<RoleGuard allowedRoles={managementRoles}><InvoicesListPage /></RoleGuard>} />
+          <Route path="notifications" element={<RoleGuard allowedRoles={managementRoles}><NotificationsListPage /></RoleGuard>} />
           <Route path="reports/consolidated-profit-loss" element={<RoleGuard allowedRoles={managementRoles}><ConsolidatedPnLPage/></RoleGuard>}/><Route path="reports/partner-profit-share" element={<RoleGuard allowedRoles={managementRoles}><PartnerProfitSharePage/></RoleGuard>}/><Route path="reports/outstanding-balances" element={<RoleGuard allowedRoles={managementRoles}><OutstandingBalancesPage/></RoleGuard>}/><Route path="reports/stock-summary" element={<RoleGuard allowedRoles={managementRoles}><StockSummaryPage/></RoleGuard>}/><Route path="reports/expense-breakdown" element={<RoleGuard allowedRoles={managementRoles}><ExpenseBreakdownPage/></RoleGuard>}/><Route path="reports/payroll-summary" element={<RoleGuard allowedRoles={managementRoles}><PayrollSummaryPage/></RoleGuard>}/>
           <Route path="shop" element={<Navigate to="/shop/incoming-transfers" replace />} />
           <Route path="shop/incoming-transfers" element={<ShopAccess><ShopIncomingTransfersPage /></ShopAccess>} />

@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Bell,
   Bird,
   Building2,
   ChevronLeft,
@@ -99,6 +100,8 @@ const navigation = [
     { label: "Salary Runs", to: "/payroll/runs", managementOnly: true },
   ] },
   { label: "Expenses", to: "/expenses", icon: CircleDollarSign },
+  { label: "Invoices", to: "/invoices", icon: FileText, managementOnly: true },
+  { label: "Notifications", to: "/notifications", icon: Bell, managementOnly: true },
   { label: "Reports", to: "/reports/consolidated-profit-loss", icon: FileText, children: [
     {label:"Consolidated P&L",to:"/reports/consolidated-profit-loss"},{label:"Partner Profit Share",to:"/reports/partner-profit-share"},{label:"Outstanding Balances",to:"/reports/outstanding-balances"},{label:"Stock Summary",to:"/reports/stock-summary"},{label:"Expense Breakdown",to:"/reports/expense-breakdown"},{label:"Payroll Summary",to:"/reports/payroll-summary"},
   ] },

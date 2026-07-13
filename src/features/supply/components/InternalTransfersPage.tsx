@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/common/DataTable";
+import { InvoiceButton } from "@/features/invoices/components/InvoiceButton";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -57,6 +58,7 @@ export function InternalTransfersPage() {
     role === Role.OWNER ||
     role === Role.ACCOUNTANT ||
     (role === Role.DEPARTMENT_STAFF && department === DepartmentCode.SUPPLY);
+  const canInvoice = role === Role.OWNER || role === Role.ACCOUNTANT;
   const [create, state] = useCreateInternalTransferMutation();
   const [settle, settleState] = useSettleInternalTransferMutation();
   const columns: DataTableColumn<InternalTransfer>[] = [
@@ -121,12 +123,13 @@ export function InternalTransfersPage() {
     {
       id: "action",
       header: "Actions",
-      cell: (r) =>
-        r.settlementStatus !== "settled" && canWrite ? (
+      cell: (r) => <div className="flex gap-2">
+        {canInvoice ? <InvoiceButton sourceType="internal_transfer" sourceId={r.id} label="Print" /> : null}
+        {r.settlementStatus !== "settled" && canWrite ? (
           <Button size="sm" variant="outline" onClick={() => setSettling(r)}>
             Settle
           </Button>
-        ) : null,
+        ) : null}</div>,
     },
   ];
   if (query.isLoading) return <PageSkeleton rows={6} />;
