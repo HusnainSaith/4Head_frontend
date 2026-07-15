@@ -25,9 +25,20 @@ vi.mock("@/features/parties/partiesApi", () => ({
   useUpdatePartyMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
   useDeletePartyMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
 }));
+vi.mock("@/features/vehicles/vehiclesApi", () => ({
+  useListDepartmentsQuery: vi.fn(() => ({
+    data: {
+      data: [
+        { id: "department-brokerage", name: "Brokerage", type: "BROKERAGE" },
+        { id: "department-supply", name: "Supply", type: "SUPPLY" },
+      ],
+    },
+  })),
+}));
 
 import * as partiesApiModule from "@/features/parties/partiesApi";
 import { PartiesListPage } from "@/features/parties/components/PartiesListPage";
+import { departmentOptionsFrom } from "@/features/parties/department-options";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -118,6 +129,23 @@ describe("PartiesListPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("uses reference department names instead of UUID fallbacks", () => {
+    expect(
+      departmentOptionsFrom(
+        [
+          {
+            id: "department-brokerage",
+            name: "Brokerage",
+            type: "BROKERAGE",
+          },
+        ],
+        [],
+        null,
+        null,
+      ),
+    ).toEqual([{ id: "department-brokerage", name: "Brokerage" }]);
+  });
+
   it("shows empty state when there are no parties", () => {
     renderPage();
     expect(screen.getByText("No parties found")).toBeInTheDocument();
@@ -127,7 +155,11 @@ describe("PartiesListPage", () => {
     mockUseListPartiesQuery().mockReturnValue({
       data: paginatedResponse([
         makeParty({ id: "p1", name: "Alpha Farm", partyType: PartyType.FARM }),
-        makeParty({ id: "p2", name: "Beta Broker", partyType: PartyType.BROKER }),
+        makeParty({
+          id: "p2",
+          name: "Beta Broker",
+          partyType: PartyType.BROKER,
+        }),
       ]),
       isLoading: false,
       isError: false,
@@ -143,7 +175,11 @@ describe("PartiesListPage", () => {
     mockUseListPartiesQuery().mockReturnValue({
       data: paginatedResponse([
         makeParty({ id: "p1", name: "Alpha Farm" }),
-        makeParty({ id: "p2", name: "Beta Broker", partyType: PartyType.BROKER }),
+        makeParty({
+          id: "p2",
+          name: "Beta Broker",
+          partyType: PartyType.BROKER,
+        }),
       ]),
       isLoading: false,
       isError: false,

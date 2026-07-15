@@ -51,6 +51,7 @@ export function DepartmentBalancesPanel({
       <div className="grid gap-4 md:grid-cols-2">
         <StatCard
           label="Total payable"
+          tone="danger"
           value={
             query.isLoading
               ? "…"
@@ -61,6 +62,7 @@ export function DepartmentBalancesPanel({
         />
         <StatCard
           label="Total receivable"
+          tone="success"
           value={
             query.isLoading
               ? "…"

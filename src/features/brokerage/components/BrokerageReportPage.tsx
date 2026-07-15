@@ -65,22 +65,29 @@ export function BrokerageReportPage() {
           <StatCard
             label="Revenue"
             value={money.format(Number(query.data.data.revenue))}
+            tone="success"
           />
           <StatCard
             label="COGS"
             value={money.format(Number(query.data.data.cogs))}
+            tone="danger"
           />
           <StatCard
             label="Operating expenses"
             value={money.format(Number(query.data.data.operatingExpenses))}
+            tone="danger"
           />
           <StatCard
             label="Payroll"
             value={money.format(Number(query.data.data.payrollExpenses))}
+            tone="danger"
           />
           <StatCard
             label="Net profit"
             value={money.format(Number(query.data.data.netProfit))}
+            tone={
+              Number(query.data.data.netProfit) >= 0 ? "success" : "danger"
+            }
           />
         </div>
       )}

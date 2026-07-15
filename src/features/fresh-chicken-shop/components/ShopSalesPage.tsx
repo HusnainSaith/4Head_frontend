@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
+import { z } from "zod";
 import { DataTable, type DataTableColumn } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PageSkeleton } from "@/components/common/Skeletons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +48,6 @@ import {
   useDeleteShopSaleMutation,
   useGetShopStockQuery,
   useListShopSalesQuery,
-  useUpdateShopSaleMutation,
 } from "../shopApi";
 import type { CreateSaleRequest, ShopSale } from "../types";
 
@@ -54,6 +55,19 @@ const money = new Intl.NumberFormat("en-PK", {
   style: "currency",
   currency: "PKR",
 });
+
+const shopSaleSchema = z
+  .object({
+    liveWeightKg: z.number().positive("Live weight must be greater than zero."),
+    dressedWeightKg: z
+      .number()
+      .positive("Dressed weight must be greater than zero."),
+    ratePerKg: z.number().positive("Sale rate must be greater than zero."),
+  })
+  .refine((value) => value.dressedWeightKg <= value.liveWeightKg, {
+    path: ["dressedWeightKg"],
+    message: "Dressed weight cannot exceed live weight.",
+  });
 
 const columns: DataTableColumn<ShopSale>[] = [
   {
@@ -72,9 +86,9 @@ const columns: DataTableColumn<ShopSale>[] = [
       ),
   },
   {
-    id: "qty",
-    header: "Quantity (kg)",
-    cell: (r) => `${r.quantityKg} kg`,
+    id: "liveWeight",
+    header: "Live / dressed",
+    cell: (r) => `${r.liveWeightKg} / ${r.dressedWeightKg} kg`,
     align: "right",
   },
   {
@@ -84,9 +98,16 @@ const columns: DataTableColumn<ShopSale>[] = [
     align: "right",
   },
   {
-    id: "margin",
-    header: "Margin/kg",
-    cell: (r) => money.format(Number(r.profitMarginPerKg)),
+    id: "shrinkage",
+    header: "Processing loss",
+    cell: (r) =>
+      `${r.shrinkageKg} kg / ${money.format(Number(r.processingLossAmount))}`,
+    align: "right",
+  },
+  {
+    id: "grossProfit",
+    header: "Gross profit",
+    cell: (r) => money.format(Number(r.grossProfitAmount)),
     align: "right",
   },
   {
@@ -133,10 +154,9 @@ export function ShopSalesPage() {
   const canInvoice = role === Role.OWNER || role === Role.ACCOUNTANT;
 
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<ShopSale | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<ShopSale | null>(null);
   const [createSale, createState] = useCreateShopSaleMutation();
-  const [updateSale, updateState] = useUpdateShopSaleMutation();
-  const [deleteSale] = useDeleteShopSaleMutation();
+  const [deleteSale, deleteState] = useDeleteShopSaleMutation();
 
   const availableKg = stock.data?.data.quantityKg;
 
@@ -154,18 +174,10 @@ export function ShopSalesPage() {
                   label="Print"
                 />
               ) : null}
-              <Button variant="ghost" size="sm" onClick={() => setEditing(r)}>
-                Edit
-              </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() =>
-                  void deleteSale(r.id)
-                    .unwrap()
-                    .then(() => toast.success("Sale deleted"))
-                    .catch((e) => toast.error(getApiErrorMessage(e)))
-                }
+                onClick={() => setPendingDelete(r)}
               >
                 Delete
               </Button>
@@ -210,29 +222,41 @@ export function ShopSalesPage() {
         emptyContent={<EmptyState title="No sales recorded" />}
       />
       <SaleDialog
-        key={editing?.id ?? (open ? "new-open" : "new-closed")}
-        open={open || Boolean(editing)}
-        sale={editing}
+        key={open ? "new-open" : "new-closed"}
+        open={open}
         availableKg={availableKg}
-        loading={createState.isLoading || updateState.isLoading}
+        wac={stock.data?.data.wac}
+        loading={createState.isLoading}
         onClose={() => {
           setOpen(false);
-          setEditing(null);
         }}
         onSubmit={async (body) => {
           try {
-            if (editing) {
-              await updateSale({ id: editing.id, body }).unwrap();
-              toast.success("Sale updated");
-            } else {
-              await createSale(body as CreateSaleRequest).unwrap();
-              toast.success("Sale recorded");
-            }
+            await createSale(body).unwrap();
+            toast.success("Sale recorded");
             setOpen(false);
-            setEditing(null);
           } catch (e) {
             toast.error(getApiErrorMessage(e));
           }
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(nextOpen) => !nextOpen && setPendingDelete(null)}
+        title="Cancel this shop sale?"
+        description="Stock and ledger effects will be reversed. The original record remains in the audit trail."
+        confirmLabel="Cancel sale"
+        destructive
+        loading={deleteState.isLoading}
+        onConfirm={() => {
+          if (!pendingDelete) return;
+          void deleteSale(pendingDelete.id)
+            .unwrap()
+            .then(() => {
+              toast.success("Sale cancelled");
+              setPendingDelete(null);
+            })
+            .catch((error) => toast.error(getApiErrorMessage(error)));
         }}
       />
     </PageContainer>
@@ -241,34 +265,27 @@ export function ShopSalesPage() {
 
 function SaleDialog({
   open,
-  sale,
   availableKg,
+  wac,
   loading,
   onClose,
   onSubmit,
 }: {
   open: boolean;
-  sale: ShopSale | null;
   availableKg?: string;
+  wac?: string;
   loading: boolean;
   onClose: () => void;
   onSubmit: (body: CreateSaleRequest) => Promise<void>;
 }) {
-  const [customerId, setCustomerId] = useState(sale?.customerPartyId ?? "");
-  const [qty, setQty] = useState(sale ? String(sale.quantityKg) : "");
-  const [rate, setRate] = useState(sale ? String(sale.ratePerKg) : "");
-  const [method, setMethod] = useState<"cash" | "bank" | "credit">(
-    sale?.paymentMethod ?? "cash",
-  );
-  const [amountReceived, setAmountReceived] = useState(
-    sale ? String(sale.amountReceived) : "",
-  );
-  const [date, setDate] = useState(
-    sale
-      ? String(sale.saleDate).slice(0, 10)
-      : new Date().toISOString().slice(0, 10),
-  );
-  const [notes, setNotes] = useState(sale?.notes ?? "");
+  const [customerId, setCustomerId] = useState("");
+  const [liveWeight, setLiveWeight] = useState("");
+  const [dressedWeight, setDressedWeight] = useState("");
+  const [rate, setRate] = useState("");
+  const [method, setMethod] = useState<"cash" | "bank" | "credit">("cash");
+  const [amountReceived, setAmountReceived] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useState("");
   const [formError, setFormError] = useState("");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newName, setNewName] = useState("");
@@ -283,7 +300,8 @@ function SaleDialog({
 
   const handleClose = () => {
     setCustomerId("");
-    setQty("");
+    setLiveWeight("");
+    setDressedWeight("");
     setRate("");
     setMethod("cash");
     setAmountReceived("");
@@ -317,17 +335,21 @@ function SaleDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
-    const q = Number(qty);
+    const live = Number(liveWeight);
+    const dressed = Number(dressedWeight);
     const r = Number(rate);
-    if (!Number.isFinite(q) || q <= 0) {
-      setFormError("Quantity must be a positive number.");
+    const parsed = shopSaleSchema.safeParse({
+      liveWeightKg: live,
+      dressedWeightKg: dressed,
+      ratePerKg: r,
+    });
+    if (!parsed.success) {
+      setFormError(
+        parsed.error.issues[0]?.message ?? "Check the sale weights.",
+      );
       return;
     }
-    if (!Number.isFinite(r) || r <= 0) {
-      setFormError("Rate per kg must be a positive number.");
-      return;
-    }
-    const total = q * r;
+    const total = dressed * r;
     const enteredAmount =
       amountReceived === "" ? undefined : Number(amountReceived);
     if (
@@ -346,16 +368,17 @@ function SaleDialog({
       setFormError("Select a customer when a receivable balance remains.");
       return;
     }
-    if (availableKg && q > Number(availableKg)) {
+    if (availableKg && live > Number(availableKg)) {
       setFormError(`Insufficient stock. Available: ${availableKg} kg`);
       return;
     }
     void onSubmit({
       customerPartyId: customerId || undefined,
-      quantityKg: q,
+      liveWeightKg: live,
+      dressedWeightKg: dressed,
       ratePerKg: r,
       paymentMethod: method,
-      amountReceived: sale ? undefined : enteredAmount,
+      amountReceived: enteredAmount,
       saleDate: date,
       notes: notes || undefined,
     });
@@ -368,9 +391,9 @@ function SaleDialog({
         if (!next) handleClose();
       }}
     >
-      <DialogContent>
+      <DialogContent className="scrollbar-hidden">
         <DialogHeader>
-          <DialogTitle>{sale ? "Edit Sale" : "Record Sale"}</DialogTitle>
+          <DialogTitle>Record Live-to-Dressed Sale</DialogTitle>
           <DialogDescription>
             {availableKg !== undefined
               ? `Available stock: ${availableKg} kg`
@@ -438,15 +461,17 @@ function SaleDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="sale-qty">Quantity (kg) *</Label>
+            <Label htmlFor="sale-live-weight">
+              1. Live weight pulled from stock (kg) *
+            </Label>
             <Input
-              id="sale-qty"
+              id="sale-live-weight"
               type="number"
               min="0.001"
               step="0.001"
               required
-              value={qty}
-              onChange={(e) => setQty(e.target.value)}
+              value={liveWeight}
+              onChange={(e) => setLiveWeight(e.target.value)}
             />
             {availableKg && (
               <p className="text-xs text-muted-foreground">
@@ -456,7 +481,31 @@ function SaleDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="sale-rate">Rate per kg *</Label>
+            <Label htmlFor="sale-dressed-weight">
+              2. Dressed weight sold (kg) *
+            </Label>
+            <Input
+              id="sale-dressed-weight"
+              type="number"
+              min="0.001"
+              step="0.001"
+              max={liveWeight || undefined}
+              required
+              value={dressedWeight}
+              onChange={(e) => setDressedWeight(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Processing loss:{" "}
+              {Math.max(
+                0,
+                (Number(liveWeight) || 0) - (Number(dressedWeight) || 0),
+              ).toFixed(3)}{" "}
+              kg
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="sale-rate">3. Sale rate per dressed kg *</Label>
             <Input
               id="sale-rate"
               type="number"
@@ -467,6 +516,13 @@ function SaleDialog({
               onChange={(e) => setRate(e.target.value)}
             />
           </div>
+
+          <ProfitPreview
+            liveWeightKg={Number(liveWeight) || 0}
+            dressedWeightKg={Number(dressedWeight) || 0}
+            ratePerKg={Number(rate) || 0}
+            wac={Number(wac) || 0}
+          />
 
           <div className="space-y-1.5">
             <Label>Payment method</Label>
@@ -492,14 +548,14 @@ function SaleDialog({
               type="number"
               min="0"
               step="0.01"
-              disabled={Boolean(sale)}
               value={amountReceived}
               onChange={(e) => setAmountReceived(e.target.value)}
               placeholder={method === "credit" ? "0.00" : "Blank = full amount"}
             />
             <p className="text-xs text-muted-foreground">
-              Total: {money.format((Number(qty) || 0) * (Number(rate) || 0))}.
-              Any balance becomes receivable from the selected customer.
+              Total:{" "}
+              {money.format((Number(dressedWeight) || 0) * (Number(rate) || 0))}
+              . Any balance becomes receivable from the selected customer.
             </p>
           </div>
 
@@ -535,5 +591,74 @@ function SaleDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ProfitPreview({
+  liveWeightKg,
+  dressedWeightKg,
+  ratePerKg,
+  wac,
+}: {
+  liveWeightKg: number;
+  dressedWeightKg: number;
+  ratePerKg: number;
+  wac: number;
+}) {
+  const revenue = dressedWeightKg * ratePerKg;
+  const cogs = dressedWeightKg * wac;
+  const processingLoss = Math.max(0, liveWeightKg - dressedWeightKg) * wac;
+  const estimatedProfit = revenue - cogs - processingLoss;
+  const minimumRate =
+    dressedWeightKg > 0 ? (liveWeightKg * wac) / dressedWeightKg : 0;
+
+  return (
+    <div
+      className={`rounded-md border p-3 text-sm ${
+        estimatedProfit < 0
+          ? "border-destructive/30 bg-destructive/5"
+          : "border-emerald-500/30 bg-emerald-500/5"
+      }`}
+      aria-live="polite"
+    >
+      <p className="font-medium">Live profit preview</p>
+      <div className="mt-2 grid grid-cols-2 gap-2 text-muted-foreground sm:grid-cols-4">
+        <span>
+          Revenue
+          <br />
+          <strong className="text-foreground">{money.format(revenue)}</strong>
+        </span>
+        <span>
+          Dressed COGS
+          <br />
+          <strong className="text-foreground">{money.format(cogs)}</strong>
+        </span>
+        <span>
+          Processing loss
+          <br />
+          <strong className="text-foreground">
+            {money.format(processingLoss)}
+          </strong>
+        </span>
+        <span>
+          Estimated profit
+          <br />
+          <strong
+            className={
+              estimatedProfit < 0 ? "text-destructive" : "text-emerald-700"
+            }
+          >
+            {money.format(estimatedProfit)}
+          </strong>
+        </span>
+      </div>
+      {minimumRate > 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Estimated break-even rate: {money.format(minimumRate)} per dressed kg.
+          Final amounts are calculated by the server using the locked WAC at
+          posting time.
+        </p>
+      ) : null}
+    </div>
   );
 }

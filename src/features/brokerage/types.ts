@@ -133,7 +133,7 @@ export type StockWriteoffReason =
   "spoilage" | "mortality" | "transit_loss" | "other";
 
 export interface StockWriteoffRequest {
-  departmentId: string;
+  departmentId?: string;
   quantityKg: number;
   reason: StockWriteoffReason;
   note?: string;

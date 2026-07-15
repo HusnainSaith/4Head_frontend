@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PageSkeleton } from "@/components/common/Skeletons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -70,10 +71,15 @@ export function BrokerageTransactionsPage({ kind }: { kind: Kind }) {
     role === Role.DEPARTMENT_STAFF;
   const canInvoice = role === Role.OWNER || role === Role.ACCOUNTANT;
   const [open, setOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<
+    BrokeragePurchase | BrokerageSale | null
+  >(null);
   const [createPurchase, purchaseState] = useCreateBrokeragePurchaseMutation();
   const [createSale, saleState] = useCreateBrokerageSaleMutation();
-  const [deletePurchase] = useDeleteBrokeragePurchaseMutation();
-  const [deleteSale] = useDeleteBrokerageSaleMutation();
+  const [deletePurchase, deletePurchaseState = { isLoading: false }] =
+    useDeleteBrokeragePurchaseMutation();
+  const [deleteSale, deleteSaleState = { isLoading: false }] =
+    useDeleteBrokerageSaleMutation();
   const records = (query.data?.data?.items ?? []) as Array<
     BrokeragePurchase | BrokerageSale
   >;
@@ -169,11 +175,7 @@ export function BrokerageTransactionsPage({ kind }: { kind: Kind }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() =>
-                      void (kind === "purchase"
-                        ? deletePurchase(row.id)
-                        : deleteSale(row.id))
-                    }
+                    onClick={() => setPendingDelete(row)}
                   >
                     Delete
                   </Button>
@@ -254,6 +256,25 @@ export function BrokerageTransactionsPage({ kind }: { kind: Kind }) {
           } catch (error) {
             toast.error(getApiErrorMessage(error));
           }
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(nextOpen) => !nextOpen && setPendingDelete(null)}
+        title={`Cancel this ${kind}?`}
+        description="Stock and ledger effects will be reversed. This audit-safe cancellation cannot be undone."
+        confirmLabel={`Cancel ${kind}`}
+        destructive
+        loading={deletePurchaseState.isLoading || deleteSaleState.isLoading}
+        onConfirm={() => {
+          if (!pendingDelete) return;
+          const mutation = kind === "purchase"
+            ? deletePurchase(pendingDelete.id)
+            : deleteSale(pendingDelete.id);
+          void mutation.unwrap().then(() => {
+            toast.success(`${kind === "purchase" ? "Purchase" : "Sale"} cancelled`);
+            setPendingDelete(null);
+          }).catch((error) => toast.error(getApiErrorMessage(error)));
         }}
       />
     </PageContainer>

@@ -7,18 +7,22 @@ import type {
   RefreshRequest,
   RefreshResponse,
   SessionUser,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  AuthMessageResponse,
 } from "@/features/auth/types";
-import {
-  getRefreshToken,
-  setAuthCookies,
-  setAuthProfile,
-} from "@/lib/auth-cookies";
-import { decodeJwtPayload } from "@/lib/jwt";
+import { setAuthProfile } from "@/lib/auth-cookies";
 import { apiSlice } from "@/store/apiSlice";
 import { DepartmentCode } from "@/types/enums";
 
-function getDepartmentCode(accessToken: string): DepartmentCode | null {
-  const value = decodeJwtPayload(accessToken)?.departmentCode;
+function getDepartmentCode(
+  user: LoginResponse["data"]["user"],
+): DepartmentCode | null {
+  const value = (
+    user as LoginResponse["data"]["user"] & {
+      department?: { type?: string } | null;
+    }
+  ).department?.type;
   return value &&
     Object.values(DepartmentCode).includes(value as DepartmentCode)
     ? (value as DepartmentCode)
@@ -31,31 +35,37 @@ export const authApi = apiSlice.injectEndpoints({
       query: (body) => ({ url: "/auth/login", method: "POST", body }),
       async onQueryStarted(_request, { dispatch, queryFulfilled }) {
         const { data: response } = await queryFulfilled;
-        const { accessToken, refreshToken, user } = response.data;
+        const { user } = response.data;
         const sessionUser: SessionUser = {
           ...user,
-          departmentCode: getDepartmentCode(accessToken),
+          departmentCode: getDepartmentCode(user),
         };
-        setAuthCookies(accessToken, refreshToken);
         setAuthProfile(sessionUser);
         dispatch(credentialsSet(sessionUser));
       },
     }),
     refresh: builder.mutation<RefreshResponse, RefreshRequest>({
       query: (body) => ({ url: "/auth/refresh", method: "POST", body }),
-      async onQueryStarted(_request, { queryFulfilled }) {
-        const refreshToken = getRefreshToken();
-        const { data: response } = await queryFulfilled;
-        if (refreshToken) {
-          setAuthCookies(response.data.accessToken, refreshToken);
-        }
-      },
     }),
     logout: builder.mutation<LogoutResponse, LogoutRequest>({
       query: (body) => ({ url: "/auth/logout", method: "POST", body }),
     }),
+    forgotPassword: builder.mutation<
+      AuthMessageResponse,
+      ForgotPasswordRequest
+    >({
+      query: (body) => ({ url: "/auth/password-forgot", method: "POST", body }),
+    }),
+    resetPassword: builder.mutation<AuthMessageResponse, ResetPasswordRequest>({
+      query: (body) => ({ url: "/auth/reset-password", method: "POST", body }),
+    }),
   }),
 });
 
-export const { useLoginMutation, useRefreshMutation, useLogoutMutation } =
-  authApi;
+export const {
+  useLoginMutation,
+  useRefreshMutation,
+  useLogoutMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+} = authApi;

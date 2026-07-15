@@ -60,6 +60,7 @@ vi.mock("../wastageApi", () => ({
     isLoading: false,
     isError: false,
   }),
+  useCreateWastageStockWriteoffMutation: () => [vi.fn(), { isLoading: false }],
   useCreateSaleMutation: () => [createSale, { isLoading: false }],
   useUpdateSaleMutation: () => [vi.fn(), { isLoading: false }],
   useDeleteSaleMutation: () => [vi.fn(), { isLoading: false }],

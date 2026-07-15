@@ -26,6 +26,7 @@ export interface AuthUser {
   roleId: string | null;
   role: AuthRole | null;
   departmentId: string | null;
+  department?: { id: string; name: string; type: DepartmentCode } | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -53,26 +54,23 @@ export function isSessionUser(value: unknown): value is SessionUser {
 }
 
 export interface LoginResponseData {
-  accessToken: string;
-  refreshToken: string;
   user: AuthUser;
 }
 
 export type LoginResponse = ApiResponse<LoginResponseData>;
 
-/** Exact body accepted by POST /auth/refresh and POST /auth/logout. */
-export interface RefreshRequest {
-  refreshToken: string;
+export type RefreshRequest = Record<string, never>;
+export type RefreshResponse = ApiResponse<null>;
+export type LogoutRequest = Record<string, never>;
+export type LogoutResponse = ApiResponse<null>;
+
+export interface ForgotPasswordRequest {
+  email: string;
 }
 
-export interface RefreshResponseData {
-  accessToken: string;
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
 }
 
-export type RefreshResponse = ApiResponse<RefreshResponseData>;
-
-export type LogoutRequest = RefreshRequest;
-export type LogoutResponse = ApiResponse<{
-  success: boolean;
-  message: string;
-}>;
+export type AuthMessageResponse = ApiResponse<null>;

@@ -24,13 +24,12 @@ import {
   selectUserDepartmentId,
   selectUserRole,
 } from "@/features/auth/authSlice";
-import {
-  type DepartmentOption,
-  PartyFormDialog,
-} from "@/features/parties/components/PartyFormDialog";
+import { PartyFormDialog } from "@/features/parties/components/PartyFormDialog";
 import { useListPartiesQuery } from "@/features/parties/partiesApi";
 import { PartyType, type Party } from "@/features/parties/types";
-import { DepartmentCode, Role } from "@/types/enums";
+import { departmentOptionsFrom } from "@/features/parties/department-options";
+import { Role } from "@/types/enums";
+import { useListDepartmentsQuery } from "@/features/vehicles/vehiclesApi";
 
 const PAGE_SIZE = 10;
 const ALL_TYPES = "all";
@@ -56,50 +55,6 @@ const partyTypeVariants: Record<
   [PartyType.FACTORY]: "outline",
   [PartyType.INTERNAL_DEPARTMENT]: "destructive",
 };
-
-const departmentCodeLabels: Record<DepartmentCode, string> = {
-  [DepartmentCode.BROKERAGE]: "Brokerage",
-  [DepartmentCode.SUPPLY]: "Supply",
-  [DepartmentCode.WASTAGE]: "Wastage",
-  [DepartmentCode.FRESH_CHICKEN_SHOP]: "Fresh Chicken Shop",
-};
-
-function fallbackDepartmentName(id: string): string {
-  return `Department ${id.slice(0, 8)}`;
-}
-
-function departmentOptionsFrom(
-  parties: Party[],
-  assignedDepartmentId: string | null,
-  assignedDepartmentCode: DepartmentCode | null,
-): DepartmentOption[] {
-  const departments = new Map<string, string>();
-  if (assignedDepartmentId) {
-    departments.set(
-      assignedDepartmentId,
-      assignedDepartmentCode
-        ? departmentCodeLabels[assignedDepartmentCode]
-        : fallbackDepartmentName(assignedDepartmentId),
-    );
-  }
-  for (const party of parties) {
-    if (party.primaryDepartmentId) {
-      departments.set(
-        party.primaryDepartmentId,
-        party.primaryDepartment?.name ??
-          fallbackDepartmentName(party.primaryDepartmentId),
-      );
-    }
-    if (party.linkedDepartmentId) {
-      departments.set(
-        party.linkedDepartmentId,
-        party.linkedDepartment?.name ??
-          fallbackDepartmentName(party.linkedDepartmentId),
-      );
-    }
-  }
-  return [...departments].map(([id, name]) => ({ id, name }));
-}
 
 export function PartiesListPage() {
   const navigate = useNavigate();
@@ -129,22 +84,30 @@ export function PartiesListPage() {
     departmentId: effectiveDepartmentId,
     search: nameSearch.trim() || undefined,
   });
+  const departmentsQuery = useListDepartmentsQuery();
 
   const paginatedData = partiesQuery.data?.data;
-  const parties = useMemo(
-    () => paginatedData?.items ?? [],
-    [paginatedData],
-  );
+  const parties = useMemo(() => paginatedData?.items ?? [], [paginatedData]);
   const pagination = paginatedData?.pagination;
 
   const departmentOptions = useMemo(
     () =>
       departmentOptionsFrom(
+        departmentsQuery.data?.data ?? [],
         parties,
         assignedDepartmentId,
         assignedDepartmentCode,
       ),
-    [assignedDepartmentCode, assignedDepartmentId, parties],
+    [
+      assignedDepartmentCode,
+      assignedDepartmentId,
+      departmentsQuery.data?.data,
+      parties,
+    ],
+  );
+  const departmentNameById = useMemo(
+    () => new Map(departmentOptions.map(({ id, name }) => [id, name])),
+    [departmentOptions],
   );
 
   const totalRecords = pagination?.total ?? 0;
@@ -178,7 +141,7 @@ export function PartiesListPage() {
         cell: (party) =>
           party.primaryDepartment?.name ??
           (party.primaryDepartmentId
-            ? fallbackDepartmentName(party.primaryDepartmentId)
+            ? (departmentNameById.get(party.primaryDepartmentId) ?? "—")
             : "—"),
       },
       {
@@ -203,7 +166,7 @@ export function PartiesListPage() {
           ),
       },
     ],
-    [],
+    [departmentNameById],
   );
 
   const changeFilter = (change: () => void) => {

@@ -19,6 +19,16 @@ const LoginPage = lazy(() =>
     default: module.LoginPage,
   })),
 );
+const ForgotPasswordPage = lazy(() =>
+  import("@/features/auth/components/PasswordResetPages").then((module) => ({
+    default: module.ForgotPasswordPage,
+  })),
+);
+const ResetPasswordPage = lazy(() =>
+  import("@/features/auth/components/PasswordResetPages").then((module) => ({
+    default: module.ResetPasswordPage,
+  })),
+);
 const DashboardPage = lazy(() =>
   import("@/features/dashboard/components/DashboardPage").then((module) => ({
     default: module.DashboardPage,
@@ -319,6 +329,8 @@ export function AppRoutes() {
     <Suspense fallback={<PageSkeleton rows={5} />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           element={
             <ProtectedRoute>

@@ -68,23 +68,32 @@ export function WastageReportPage() {
           <StatCard
             label="Revenue"
             value={money.format(Number(data.revenue))}
+            tone="success"
           />
-          <StatCard label="COGS" value={money.format(Number(data.cogs))} />
+          <StatCard
+            label="COGS"
+            value={money.format(Number(data.cogs))}
+            tone="danger"
+          />
           <StatCard
             label="Gross Profit"
             value={money.format(Number(data.grossProfit))}
+            tone={Number(data.grossProfit) >= 0 ? "success" : "danger"}
           />
           <StatCard
             label="Operating Expenses"
             value={money.format(Number(data.operatingExpenses))}
+            tone="danger"
           />
           <StatCard
             label="Payroll"
             value={money.format(Number(data.payrollExpenses))}
+            tone="danger"
           />
           <StatCard
             label="Net Profit"
             value={money.format(Number(data.netProfit))}
+            tone={Number(data.netProfit) >= 0 ? "success" : "danger"}
           />
         </div>
       )}

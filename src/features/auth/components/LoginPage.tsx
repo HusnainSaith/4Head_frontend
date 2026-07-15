@@ -1,8 +1,7 @@
 /* eslint-disable jsx-a11y/no-autofocus -- Email is the primary control on this dedicated keyboard-first sign-in page. */
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -40,22 +39,18 @@ export function LoginPage() {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isCheckingAuth = useSelector(selectIsCheckingAuth);
   const { login, isLoggingIn, loginError } = useAuth();
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
-  const visibleError =
-    submitError ?? (loginError ? getApiErrorMessage(loginError) : null);
+  const visibleError = loginError ? getApiErrorMessage(loginError) : null;
 
   if (isCheckingAuth) return <PageSkeleton rows={4} />;
   if (isAuthenticated) return <Navigate to="/" replace />;
 
   const onSubmit = (values: LoginFormValues) => {
-    setSubmitError(null);
     const handleFailure = (error: unknown) => {
       const message = getApiErrorMessage(error);
-      setSubmitError(message);
       toast.error(message);
     };
 
@@ -108,6 +103,14 @@ export function LoginPage() {
                 />
               )}
             </FormField>
+            <div className="flex justify-end">
+              <Link
+                className="text-sm text-primary hover:underline"
+                to="/forgot-password"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <Button type="submit" fullWidth isLoading={isLoggingIn}>
               Sign in
             </Button>

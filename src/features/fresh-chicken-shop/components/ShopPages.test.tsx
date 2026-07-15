@@ -14,64 +14,74 @@ vi.mock("@/features/parties/components/DepartmentBalancesPanel", () => ({
 }));
 import { ShopReportPage } from "./ShopReportPage";
 
-const { mockSale, mockTransfer, mockStock, mockReport, mockListPartiesQuery } =
-  vi.hoisted(() => ({
-    mockListPartiesQuery: vi.fn(() => ({
+const {
+  mockSale,
+  mockTransfer,
+  mockStock,
+  mockReport,
+  mockListPartiesQuery,
+  mockCreateShopSale,
+} = vi.hoisted(() => ({
+  mockCreateShopSale: vi.fn(),
+  mockListPartiesQuery: vi.fn(() => ({
+    data: {
       data: {
-        data: {
-          items: [
-            { id: "c1", name: "Walk-in Customer", partyType: "customer" },
-          ],
-        },
+        items: [{ id: "c1", name: "Walk-in Customer", partyType: "customer" }],
       },
-    })),
-    mockSale: {
-      id: "sale1",
-      customerParty: {
-        id: "c1",
-        name: "Walk-in Customer",
-        partyType: "customer",
-      },
-      customerPartyId: "c1",
-      quantityKg: "5.000",
-      ratePerKg: "350.00",
-      profitMarginPerKg: "50.00",
-      totalAmount: "1750.00",
-      paymentMethod: "cash" as const,
-      amountReceived: "1750.00",
-      outstandingAmount: "0.00",
-      saleDate: "2026-07-12",
-      departmentId: "dept1",
-      createdAt: "2026-07-12T00:00:00Z",
-      updatedAt: "2026-07-12T00:00:00Z",
     },
-    mockTransfer: {
-      id: "t1",
-      fromDepartmentId: "supply1",
-      toDepartmentId: "shop1",
-      quantityKg: "10.000",
-      internalRatePerKg: "280.00",
-      totalAmount: "2800.00",
-      amountSettled: "1000.00",
-      remainingBalance: "1800.00",
-      settlementStatus: "partially_settled" as const,
-      transferDate: "2026-07-10",
+  })),
+  mockSale: {
+    id: "sale1",
+    customerParty: {
+      id: "c1",
+      name: "Walk-in Customer",
+      partyType: "customer",
     },
-    mockStock: {
-      id: "sb1",
-      productId: "p1",
-      departmentId: "dept1",
-      quantityKg: "42.500",
-      wac: "290.00",
-    },
-    mockReport: {
-      revenue: "50000.00",
-      cogs: "30000.00",
-      operatingExpenses: "5000.00",
-      payrollExpenses: "3000.00",
-      netProfit: "12000.00",
-    },
-  }));
+    customerPartyId: "c1",
+    liveWeightKg: "6.000",
+    dressedWeightKg: "5.000",
+    shrinkageKg: "1.000",
+    ratePerKg: "350.00",
+    wacAtSale: "290.0000",
+    totalAmount: "1750.00",
+    cogsAmount: "1450.00",
+    processingLossAmount: "290.00",
+    grossProfitAmount: "10.00",
+    paymentMethod: "cash" as const,
+    amountReceived: "1750.00",
+    outstandingAmount: "0.00",
+    saleDate: "2026-07-12",
+    departmentId: "dept1",
+    createdAt: "2026-07-12T00:00:00Z",
+    updatedAt: "2026-07-12T00:00:00Z",
+  },
+  mockTransfer: {
+    id: "t1",
+    fromDepartmentId: "supply1",
+    toDepartmentId: "shop1",
+    quantityKg: "10.000",
+    internalRatePerKg: "280.00",
+    totalAmount: "2800.00",
+    amountSettled: "1000.00",
+    remainingBalance: "1800.00",
+    settlementStatus: "partially_settled" as const,
+    transferDate: "2026-07-10",
+  },
+  mockStock: {
+    id: "sb1",
+    productId: "p1",
+    departmentId: "dept1",
+    quantityKg: "42.500",
+    wac: "290.00",
+  },
+  mockReport: {
+    revenue: "50000.00",
+    cogs: "30000.00",
+    operatingExpenses: "5000.00",
+    payrollExpenses: "3000.00",
+    netProfit: "12000.00",
+  },
+}));
 
 vi.mock("@/features/parties/partiesApi", () => ({
   useListPartiesQuery: mockListPartiesQuery,
@@ -91,7 +101,7 @@ vi.mock("@/features/fresh-chicken-shop/shopApi", () => ({
     isError: false,
   })),
   useCreateShopSaleMutation: vi.fn(() => [
-    vi.fn().mockResolvedValue({ data: mockSale }),
+    mockCreateShopSale,
     { isLoading: false },
   ]),
   useUpdateShopSaleMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
@@ -155,10 +165,17 @@ describe("IncomingTransfersPage", () => {
 
 // ── ShopSalesPage ──────────────────────────────────────────────────────────
 describe("ShopSalesPage", () => {
-  it("renders sale data with profit margin", () => {
+  beforeEach(() => {
+    mockCreateShopSale.mockReset();
+    mockCreateShopSale.mockReturnValue({
+      unwrap: () => Promise.resolve({ data: mockSale }),
+    });
+  });
+  it("renders live, dressed, and backend-derived processing values", () => {
     wrap(<ShopSalesPage />);
     expect(screen.getByText("Walk-in Customer")).toBeInTheDocument();
-    expect(screen.getByText("5.000 kg")).toBeInTheDocument();
+    expect(screen.getByText("6.000 / 5.000 kg")).toBeInTheDocument();
+    expect(screen.getByText(/1.000 kg/)).toBeInTheDocument();
   });
 
   it("opens record sale dialog with stock hint", () => {
@@ -177,14 +194,17 @@ describe("ShopSalesPage", () => {
     );
   });
 
-  it("shows insufficient-stock error when quantity exceeds available", () => {
+  it("shows insufficient-stock error when live weight exceeds available", () => {
     wrap(<ShopSalesPage />);
     fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
-    const qtyInput = screen.getByLabelText(/quantity \(kg\)/i);
-    fireEvent.change(qtyInput, { target: { value: "999" } });
-    const rateInput = screen.getByLabelText(/rate per kg/i);
+    const liveInput = screen.getByLabelText(/live weight pulled/i);
+    fireEvent.change(liveInput, { target: { value: "999" } });
+    fireEvent.change(screen.getByLabelText(/dressed weight sold/i), {
+      target: { value: "500" },
+    });
+    const rateInput = screen.getByLabelText(/sale rate per dressed kg/i);
     fireEvent.change(rateInput, { target: { value: "300" } });
-    fireEvent.submit(qtyInput.closest("form")!);
+    fireEvent.submit(liveInput.closest("form")!);
     expect(screen.getByText(/insufficient stock/i)).toBeInTheDocument();
   });
 
@@ -193,6 +213,33 @@ describe("ShopSalesPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
     fireEvent.click(screen.getByRole("button", { name: /\+ new customer/i }));
     expect(screen.getByPlaceholderText(/customer name/i)).toBeInTheDocument();
+  });
+
+  it("submits only raw live-to-dressed inputs and renders the WAC preview", () => {
+    wrap(<ShopSalesPage />);
+    fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
+    fireEvent.change(screen.getByLabelText(/live weight pulled/i), {
+      target: { value: "40" },
+    });
+    fireEvent.change(screen.getByLabelText(/dressed weight sold/i), {
+      target: { value: "30" },
+    });
+    fireEvent.change(screen.getByLabelText(/sale rate per dressed kg/i), {
+      target: { value: "480" },
+    });
+    expect(screen.getByText(/estimated break-even rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/2,800/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(mockCreateShopSale).toHaveBeenCalledWith(
+      expect.objectContaining({
+        liveWeightKg: 40,
+        dressedWeightKg: 30,
+        ratePerKg: 480,
+      }),
+    );
+    const submitted = mockCreateShopSale.mock.calls[0]?.[0];
+    expect(submitted).not.toHaveProperty("shrinkageKg");
+    expect(submitted).not.toHaveProperty("grossProfitAmount");
   });
 });
 
@@ -208,14 +255,14 @@ describe("ShopStockPage", () => {
 
   it("opens write-off dialog", () => {
     wrap(<ShopStockPage />);
-    fireEvent.click(screen.getByRole("button", { name: /record write-off/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add shrinkage/i }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByLabelText(/quantity \(kg\)/i)).toBeInTheDocument();
   });
 
   it("write-off dialog has reason select with expected default", () => {
     wrap(<ShopStockPage />);
-    fireEvent.click(screen.getByRole("button", { name: /record write-off/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add shrinkage/i }));
     expect(screen.getAllByText("spoilage").length).toBeGreaterThan(0);
   });
 });

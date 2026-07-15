@@ -8,8 +8,9 @@ export function usePrintInvoice() {
   const [fetchInvoice] = useLazyGetInvoiceQuery();
   const [isPrinting, setIsPrinting] = useState(false);
   const printInvoice = useCallback(
-    async (id: string) => {
-      const printWindow = window.open("", "_blank", "width=900,height=1100");
+    async (id: string, preparedWindow?: Window | null) => {
+      const printWindow =
+        preparedWindow ?? window.open("", "_blank", "width=900,height=1100");
       if (!printWindow) {
         toast.error("Allow pop-ups to print invoices");
         return;

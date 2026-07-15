@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PageSkeleton } from "@/components/common/Skeletons";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,6 +78,9 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
   const [to, setTo] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [open, setOpen] = useState(false);
+  const [pendingCancel, setPendingCancel] = useState<
+    SupplyPurchase | SupplySale | null
+  >(null);
   const queryArgs = {
     page,
     limit: 10,
@@ -100,8 +104,9 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
   const canInvoice = role === Role.OWNER || role === Role.ACCOUNTANT;
   const [createPurchase, purchaseState] = useCreateSupplyPurchaseMutation();
   const [createSale, saleState] = useCreateSupplySaleMutation();
-  const [cancelPurchase] = useDeleteSupplyPurchaseMutation();
-  const [cancelSale] = useDeleteSupplySaleMutation();
+  const [cancelPurchase, cancelPurchaseState] =
+    useDeleteSupplyPurchaseMutation();
+  const [cancelSale, cancelSaleState] = useDeleteSupplySaleMutation();
   const records = (query.data?.data.items ?? []) as Array<
     SupplyPurchase | SupplySale
   >;
@@ -205,18 +210,7 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => {
-                      const mutation =
-                        kind === "purchase"
-                          ? cancelPurchase(row.id)
-                          : cancelSale(row.id);
-                      void mutation
-                        .unwrap()
-                        .then(() => toast.success(`${kind} cancelled`))
-                        .catch((error) =>
-                          toast.error(getApiErrorMessage(error)),
-                        );
-                    }}
+                    onClick={() => setPendingCancel(row)}
                   >
                     Cancel
                   </Button>
@@ -345,6 +339,29 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
           } catch (error) {
             toast.error(getApiErrorMessage(error));
           }
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingCancel)}
+        onOpenChange={(nextOpen) => !nextOpen && setPendingCancel(null)}
+        title={`Cancel this Supply ${kind}?`}
+        description="Stock and ledger effects will be reversed and the original transaction retained for audit history."
+        confirmLabel={`Cancel ${kind}`}
+        destructive
+        loading={cancelPurchaseState.isLoading || cancelSaleState.isLoading}
+        onConfirm={() => {
+          if (!pendingCancel) return;
+          const mutation =
+            kind === "purchase"
+              ? cancelPurchase(pendingCancel.id)
+              : cancelSale(pendingCancel.id);
+          void mutation
+            .unwrap()
+            .then(() => {
+              toast.success(`${kind} cancelled`);
+              setPendingCancel(null);
+            })
+            .catch((error) => toast.error(getApiErrorMessage(error)));
         }}
       />
     </PageContainer>

@@ -75,19 +75,27 @@ export function ShopReportPage() {
           <StatCard
             label="Revenue"
             value={money.format(Number(data.revenue))}
+            tone="success"
           />
-          <StatCard label="COGS" value={money.format(Number(data.cogs))} />
+          <StatCard
+            label="COGS"
+            value={money.format(Number(data.cogs))}
+            tone="danger"
+          />
           <StatCard
             label="Operating expenses"
             value={money.format(Number(data.operatingExpenses))}
+            tone="danger"
           />
           <StatCard
             label="Payroll"
             value={money.format(Number(data.payrollExpenses))}
+            tone="danger"
           />
           <StatCard
             label="Net profit"
             value={money.format(Number(data.netProfit))}
+            tone={Number(data.netProfit) >= 0 ? "success" : "danger"}
           />
         </div>
       )}

@@ -9,7 +9,7 @@ import {
   selectUserRole,
 } from "@/features/auth/authSlice";
 import type { LoginRequest } from "@/features/auth/types";
-import { clearAuthCookies, getRefreshToken } from "@/lib/auth-cookies";
+import { clearAuthCookies } from "@/lib/auth-cookies";
 import type { AppDispatch } from "@/store/store";
 
 export function useAuth() {
@@ -30,11 +30,8 @@ export function useAuth() {
   );
 
   const logout = useCallback(async () => {
-    const refreshToken = getRefreshToken();
     try {
-      if (refreshToken) {
-        await logoutMutation({ refreshToken }).unwrap();
-      }
+      await logoutMutation({}).unwrap();
     } catch {
       // Local logout must complete even if backend revocation is unavailable.
     } finally {

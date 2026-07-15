@@ -6,25 +6,14 @@ import {
   type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
 import { loggedOut } from "@/features/auth/authSlice";
-import type { RefreshResponse } from "@/features/auth/types";
-import {
-  clearAuthCookies,
-  getAccessToken,
-  getRefreshToken,
-  setAuthCookies,
-} from "@/lib/auth-cookies";
-import { isTokenUnexpired } from "@/lib/jwt";
+import { clearAuthCookies, getCsrfToken } from "@/lib/auth-cookies";
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_BASE_URL,
-  // Never send the frontend-managed token cookies automatically. Authentication
-  // is exclusively the explicit bearer header prepared below.
-  credentials: "omit",
+  credentials: "include",
   prepareHeaders: (headers) => {
-    const accessToken = getAccessToken();
-    if (accessToken) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
-    }
+    const csrfToken = getCsrfToken();
+    if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
     return headers;
   },
 });
@@ -32,14 +21,6 @@ const rawBaseQuery = fetchBaseQuery({
 type RawBaseQuery = typeof rawBaseQuery;
 type BaseQueryApi = Parameters<RawBaseQuery>[1];
 type BaseQueryExtraOptions = Parameters<RawBaseQuery>[2];
-
-function isRefreshResponse(value: unknown): value is RefreshResponse {
-  if (typeof value !== "object" || value === null) return false;
-  const envelope = value as Record<string, unknown>;
-  if (typeof envelope.data !== "object" || envelope.data === null) return false;
-  const data = envelope.data as Record<string, unknown>;
-  return typeof data.accessToken === "string";
-}
 
 function isSessionEndpoint(args: string | FetchArgs): boolean {
   const url = typeof args === "string" ? args : args.url;
@@ -52,32 +33,17 @@ async function refreshSession(
   api: BaseQueryApi,
   extraOptions: BaseQueryExtraOptions,
 ): Promise<boolean> {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) {
-    clearAuthCookies();
-    api.dispatch(loggedOut());
-    return false;
-  }
-
   const result = await rawBaseQuery(
     {
       url: "/auth/refresh",
       method: "POST",
-      body: { refreshToken },
+      body: {},
     },
     api,
     extraOptions,
   );
 
-  if (!result.error && isRefreshResponse(result.data)) {
-    const nextAccessToken = result.data.data.accessToken;
-    if (isTokenUnexpired(nextAccessToken) && isTokenUnexpired(refreshToken)) {
-      // The backend does not rotate refresh tokens, so the existing refresh
-      // token is written again with the expiry encoded in its own exp claim.
-      setAuthCookies(nextAccessToken, refreshToken);
-      return true;
-    }
-  }
+  if (!result.error) return true;
 
   clearAuthCookies();
   api.dispatch(loggedOut());

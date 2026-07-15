@@ -28,6 +28,7 @@ const saleRefresh = [
 const writeoffRefresh = [
   { type: "FreshChickenStock" as const, id: "CURRENT" },
   { type: "ShopReport" as const, id: "PROFIT_LOSS" },
+  { type: "Expense" as const, id: "LIST" },
 ];
 
 export const shopApi = apiSlice.injectEndpoints({

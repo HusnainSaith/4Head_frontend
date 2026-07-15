@@ -110,6 +110,7 @@ vi.mock("../supplyApi", () => ({
     isLoading: false,
     isError: false,
   }),
+  useCreateSupplyStockWriteoffMutation: () => [vi.fn(), { isLoading: false }],
   useListInternalTransfersQuery: () => ({
     data: {
       data: {

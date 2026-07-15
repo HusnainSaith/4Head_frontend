@@ -13,6 +13,8 @@ import type {
   UpdatePurchaseRequest,
   UpdateSaleRequest,
 } from "./types";
+import type { StockWriteoffInput } from "@/components/common/StockWriteoffDialog";
+import type { StockWriteoffResponse } from "@/features/fresh-chicken-shop/types";
 
 const purchaseRefresh = [
   { type: "WastagePurchase" as const, id: "LIST" },
@@ -103,6 +105,17 @@ export const wastageApi = apiSlice.injectEndpoints({
       query: () => "/wastage/stock",
       providesTags: [{ type: "WastageStock", id: "CURRENT" }],
     }),
+    createWastageStockWriteoff: builder.mutation<
+      ApiResponse<StockWriteoffResponse>,
+      StockWriteoffInput
+    >({
+      query: (body) => ({ url: "/wastage/stock/writeoffs", method: "POST", body }),
+      invalidatesTags: [
+        { type: "WastageStock", id: "CURRENT" },
+        { type: "WastageReport", id: "PROFIT_LOSS" },
+        { type: "Expense", id: "LIST" },
+      ],
+    }),
     getProfitLossReport: builder.query<
       ApiResponse<ProfitLossReport>,
       ProfitLossParams | void
@@ -132,5 +145,6 @@ export const {
   useUpdateSaleMutation,
   useDeleteSaleMutation,
   useGetStockQuery,
+  useCreateWastageStockWriteoffMutation,
   useGetProfitLossReportQuery,
 } = wastageApi;

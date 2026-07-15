@@ -1,40 +1,28 @@
 import { configureStore } from "@reduxjs/toolkit";
 
-const authState = vi.hoisted(() => ({
-  accessToken: "expired-access-token",
-  refreshToken: "valid-refresh-token",
-}));
-
 vi.mock("@/lib/auth-cookies", () => ({
-  getAccessToken: () => authState.accessToken,
-  getRefreshToken: () => authState.refreshToken,
-  setAuthCookies: (accessToken: string, refreshToken: string) => {
-    authState.accessToken = accessToken;
-    authState.refreshToken = refreshToken;
-  },
   clearAuthCookies: vi.fn(),
+  getCsrfToken: () => "csrf-token",
 }));
-
-vi.mock("@/lib/jwt", () => ({ isTokenUnexpired: () => true }));
 
 describe("apiSlice refresh concurrency", () => {
   it("performs exactly one refresh for five simultaneous 401 responses", async () => {
-    authState.accessToken = "expired-access-token";
-    authState.refreshToken = "valid-refresh-token";
     let refreshCalls = 0;
+    let sessionRefreshed = false;
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const request = input instanceof Request ? input : new Request(input);
       if (request.url.endsWith("/auth/refresh")) {
         refreshCalls += 1;
+        sessionRefreshed = true;
         await Promise.resolve();
-        return new Response(
-          JSON.stringify({ data: { accessToken: "fresh-access-token" } }),
-          { status: 200, headers: { "content-type": "application/json" } },
-        );
+        return new Response(JSON.stringify({ data: null }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
       }
 
-      if (request.headers.get("Authorization") === "Bearer fresh-access-token") {
+      if (sessionRefreshed) {
         return new Response(JSON.stringify({ data: { ok: true } }), {
           status: 200,
           headers: { "content-type": "application/json" },

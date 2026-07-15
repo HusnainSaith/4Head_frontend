@@ -8,13 +8,7 @@ import {
   sessionRestored,
 } from "@/features/auth/authSlice";
 import { isSessionUser } from "@/features/auth/types";
-import {
-  clearAuthCookies,
-  getAccessToken,
-  getAuthProfile,
-  getRefreshToken,
-} from "@/lib/auth-cookies";
-import { isTokenUnexpired } from "@/lib/jwt";
+import { clearAuthCookies, getAuthProfile } from "@/lib/auth-cookies";
 import type { AppDispatch } from "@/store/store";
 
 export function AuthBootstrap({ children }: { children: ReactNode }) {
@@ -28,8 +22,6 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
     started.current = true;
 
     const restore = async () => {
-      const accessToken = getAccessToken();
-      const refreshToken = getRefreshToken();
       const profile = getAuthProfile();
 
       if (!isSessionUser(profile)) {
@@ -38,19 +30,12 @@ export function AuthBootstrap({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (accessToken && isTokenUnexpired(accessToken)) {
+      try {
+        await refresh({}).unwrap();
         dispatch(sessionRestored(profile));
         return;
-      }
-
-      if (refreshToken && isTokenUnexpired(refreshToken)) {
-        try {
-          await refresh({ refreshToken }).unwrap();
-          dispatch(sessionRestored(profile));
-          return;
-        } catch {
-          // Fall through to the single local-session cleanup path.
-        }
+      } catch {
+        // Fall through to the single local-session cleanup path.
       }
 
       clearAuthCookies();

@@ -24,6 +24,9 @@ vi.mock("@/store/apiSlice", async () => {
         "ShopReport",
         "FreshChickenStock",
         "InternalTransfer",
+        "Expense",
+        "DepartmentBalance",
+        "ConsolidatedReport",
       ] as const,
       endpoints: () => ({}),
     }),
@@ -59,7 +62,8 @@ describe("shopApi contracts", () => {
     expect(requests[0].url).toBe("/shop/sales");
 
     const body = {
-      quantityKg: 5,
+      liveWeightKg: 6,
+      dressedWeightKg: 5,
       ratePerKg: 300,
       paymentMethod: "cash" as const,
       saleDate: "2026-07-12",
@@ -134,7 +138,8 @@ describe("shopApi contracts", () => {
     await sub;
     await dispatch(
       api.endpoints.createShopSale.initiate({
-        quantityKg: 1,
+        liveWeightKg: 1,
+        dressedWeightKg: 0.75,
         ratePerKg: 100,
         paymentMethod: "cash",
         saleDate: "2026-07-12",

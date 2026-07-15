@@ -10,59 +10,35 @@ vi.mock("js-cookie", () => ({ default: cookieMocks }));
 
 import {
   clearAuthCookies,
-  getAccessToken,
-  getRefreshToken,
-  setAuthCookies,
+  getAuthProfile,
+  getCsrfToken,
+  setAuthProfile,
 } from "@/lib/auth-cookies";
-
-function createToken(expiresAt: number): string {
-  const encode = (value: object) =>
-    btoa(JSON.stringify(value))
-      .replace(/=/g, "")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_");
-  return `${encode({ alg: "HS256", typ: "JWT" })}.${encode({
-    sub: "user-1",
-    exp: expiresAt,
-  })}.signature`;
-}
 
 beforeEach(() => vi.clearAllMocks());
 
 describe("auth-cookies", () => {
-  it("uses each JWT expiry and clears every auth cookie", () => {
-    const now = Math.floor(Date.now() / 1000);
-    const accessToken = createToken(now + 900);
-    const refreshToken = createToken(now + 604_800);
-
-    setAuthCookies(accessToken, refreshToken);
-
-    expect(cookieMocks.set).toHaveBeenNthCalledWith(
-      1,
-      "4head_access_token",
-      accessToken,
+  it("stores only non-sensitive profile bootstrap data", () => {
+    const profile = { id: "user-1", fullName: "Owner" };
+    setAuthProfile(profile);
+    expect(cookieMocks.set).toHaveBeenCalledWith(
+      "4head_auth_profile",
+      JSON.stringify(profile),
       expect.objectContaining({
         sameSite: "strict",
-        expires: expect.any(Date),
+        expires: 7,
       }),
     );
-    expect(cookieMocks.set).toHaveBeenNthCalledWith(
-      2,
-      "4head_refresh_token",
-      refreshToken,
-      expect.objectContaining({
-        sameSite: "strict",
-        expires: expect.any(Date),
-      }),
-    );
-
-    cookieMocks.get.mockImplementation((name) =>
-      name === "4head_access_token" ? accessToken : refreshToken,
-    );
-    expect(getAccessToken()).toBe(accessToken);
-    expect(getRefreshToken()).toBe(refreshToken);
+    cookieMocks.get.mockReturnValue(JSON.stringify(profile));
+    expect(getAuthProfile()).toEqual(profile);
+    cookieMocks.get.mockReturnValue("csrf-value");
+    expect(getCsrfToken()).toBe("csrf-value");
 
     clearAuthCookies();
-    expect(cookieMocks.remove).toHaveBeenCalledTimes(3);
+    expect(cookieMocks.remove).toHaveBeenCalledTimes(1);
+    expect(cookieMocks.remove).toHaveBeenCalledWith(
+      "4head_auth_profile",
+      expect.objectContaining({ sameSite: "strict" }),
+    );
   });
 });

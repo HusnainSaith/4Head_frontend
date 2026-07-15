@@ -14,6 +14,8 @@ import type {
   SupplySale,
   TransferListQuery,
 } from "./types";
+import type { StockWriteoffInput } from "@/components/common/StockWriteoffDialog";
+import type { StockWriteoffResponse } from "@/features/fresh-chicken-shop/types";
 
 const clean = <T extends object>(value: T) =>
   Object.fromEntries(
@@ -143,6 +145,21 @@ export const supplyApi = apiSlice.injectEndpoints({
       query: () => "/supply/stock",
       providesTags: [{ type: "SupplyStock", id: "CURRENT" }],
     }),
+    createSupplyStockWriteoff: builder.mutation<
+      ApiResponse<StockWriteoffResponse>,
+      StockWriteoffInput
+    >({
+      query: (body) => ({
+        url: "/supply/stock/writeoffs",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [
+        { type: "SupplyStock", id: "CURRENT" },
+        { type: "SupplyReport", id: "PROFIT_LOSS" },
+        { type: "Expense", id: "LIST" },
+      ],
+    }),
     listInternalTransfers: builder.query<
       PaginatedResponse<InternalTransfer>,
       TransferListQuery | void
@@ -211,6 +228,7 @@ export const {
   useUpdateSupplySaleMutation,
   useDeleteSupplySaleMutation,
   useGetSupplyStockQuery,
+  useCreateSupplyStockWriteoffMutation,
   useListInternalTransfersQuery,
   useCreateInternalTransferMutation,
   useSettleInternalTransferMutation,

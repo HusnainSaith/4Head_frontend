@@ -38,6 +38,9 @@ vi.mock("@/store/apiSlice", async () => {
         "SupplyReport",
         "InternalTransfer",
         "FreshChickenStock",
+        "Expense",
+        "DepartmentBalance",
+        "ConsolidatedReport",
       ] as const,
       endpoints: () => ({}),
     }),
@@ -144,5 +147,18 @@ describe("supplyApi contracts", () => {
         }),
       ]),
     );
+  });
+  it("posts Supply shrinkage to the dedicated backend endpoint", async () => {
+    const body = {
+      quantityKg: 2,
+      reason: "other" as const,
+      writeoffDate: "2026-07-15",
+    };
+    await dispatch(api.endpoints.createSupplyStockWriteoff.initiate(body));
+    expect(requests[0]).toMatchObject({
+      url: "/supply/stock/writeoffs",
+      method: "POST",
+      body,
+    });
   });
 });

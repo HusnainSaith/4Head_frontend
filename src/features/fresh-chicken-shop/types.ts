@@ -7,10 +7,15 @@ export interface ShopSale {
   departmentId: string;
   customerPartyId?: string | null;
   customerParty?: { id: string; name: string; partyType: string } | null;
-  quantityKg: string;
+  liveWeightKg: string;
+  dressedWeightKg: string;
+  shrinkageKg: string;
   ratePerKg: string;
-  profitMarginPerKg: string;
+  wacAtSale: string;
   totalAmount: string;
+  cogsAmount: string;
+  processingLossAmount: string;
+  grossProfitAmount: string;
   paymentMethod: "cash" | "bank" | "credit";
   amountReceived: string;
   outstandingAmount: string;
@@ -21,10 +26,11 @@ export interface ShopSale {
   deletedAt?: string | null;
 }
 
-/** Mirrors CreateShopSaleDto — no vehicleId, no amountReceived in create body */
+/** Mirrors CreateShopSaleDto. Derived amounts are backend-owned. */
 export interface CreateSaleRequest {
   customerPartyId?: string;
-  quantityKg: number;
+  liveWeightKg: number;
+  dressedWeightKg: number;
   ratePerKg: number;
   paymentMethod: "cash" | "bank" | "credit";
   amountReceived?: number;

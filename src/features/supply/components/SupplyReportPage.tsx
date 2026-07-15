@@ -14,6 +14,12 @@ const money = new Intl.NumberFormat("en-PK", {
   style: "currency",
   currency: "PKR",
 });
+function reportTone(label: string, value: string | number) {
+  if (label === "Revenue") return "success" as const;
+  if (label === "Gross Profit" || label === "Net Profit")
+    return Number(value) >= 0 ? ("success" as const) : ("danger" as const);
+  return "danger" as const;
+}
 const Report = ({ title, data }: { title: string; data: ProfitLossView }) => (
   <section className="space-y-4">
     <h2 className="text-lg font-semibold">{title}</h2>
@@ -30,6 +36,7 @@ const Report = ({ title, data }: { title: string; data: ProfitLossView }) => (
           key={label}
           label={label}
           value={money.format(Number(value))}
+          tone={reportTone(label, value)}
         />
       ))}
     </div>

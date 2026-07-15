@@ -41,12 +41,14 @@ h6 {
 }
 
 /* Keep sidebar navigation scrollable without showing a visual scrollbar. */
-.sidebar-scroll {
+.sidebar-scroll,
+.scrollbar-hidden {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-.sidebar-scroll::-webkit-scrollbar {
+.sidebar-scroll::-webkit-scrollbar,
+.scrollbar-hidden::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
