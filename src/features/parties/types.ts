@@ -18,6 +18,7 @@ export interface PartyDepartment {
 /** Serialized Party entity. Nullable columns are returned as null by TypeORM. */
 export interface Party {
   id: string;
+  userId: string | null;
   partyType: PartyType;
   name: string;
   phone: string | null;
@@ -37,6 +38,7 @@ export interface Party {
 
 /** Exact CreatePartyDto fields. openingBalance: positive = party owes business; negative = business owes party. */
 export interface CreatePartyRequest {
+  userId?: string;
   partyType: PartyType;
   name: string;
   phone?: string;

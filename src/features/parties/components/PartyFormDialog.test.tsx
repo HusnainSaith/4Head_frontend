@@ -19,6 +19,20 @@ vi.mock("@/features/parties/partiesApi", () => ({
   useCreatePartyMutation: vi.fn(() => [mockCreate, { isLoading: false }]),
   useUpdatePartyMutation: vi.fn(() => [mockUpdate, { isLoading: false }]),
 }));
+vi.mock("@/features/users/usersApi", () => ({
+  useListPartyUsersQuery: () => ({
+    data: {
+      data: [
+        {
+          id: "00000000-0000-4000-8000-000000000099",
+          fullName: "New Farm",
+          phone: null,
+          role: { name: "PARTY" },
+        },
+      ],
+    },
+  }),
+}));
 
 // sonner toast — silence it
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -54,6 +68,7 @@ function renderDialog(props: {
 function makeParty(overrides: Partial<Party> = {}): Party {
   return {
     id: "party-1",
+    userId: null,
     partyType: PartyType.FARM,
     name: "Existing Farm",
     phone: null,
@@ -128,10 +143,11 @@ describe("PartyFormDialog", () => {
     });
 
     renderDialog({});
-    await userEvent.type(
-      screen.getByRole("textbox", { name: /name/i }),
-      "New Farm",
-    );
+    fireEvent.click(screen.getByRole("combobox", { name: /party user/i }));
+    fireEvent.click(screen.getByRole("option", { name: /new farm/i }));
+    const name = screen.getByRole("textbox", { name: /^name/i });
+    await userEvent.clear(name);
+    await userEvent.type(name, "New Farm");
     await userEvent.click(
       screen.getByRole("button", { name: /create party/i }),
     );
@@ -140,6 +156,7 @@ describe("PartyFormDialog", () => {
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "New Farm",
+          userId: "00000000-0000-4000-8000-000000000099",
           partyType: PartyType.CUSTOMER,
         }),
       );

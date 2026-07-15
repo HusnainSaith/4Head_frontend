@@ -1,8 +1,6 @@
-import type { Role } from "@/types/enums";
-
 export interface UserRole {
   id: string;
-  name: Role;
+  name: string;
   description: string | null;
 }
 

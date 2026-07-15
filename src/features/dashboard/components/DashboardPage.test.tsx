@@ -14,12 +14,23 @@ const reportMocks = vi.hoisted(() => ({
   profit: vi.fn(),
   balances: vi.fn(),
   stock: vi.fn(),
+  departmentProfit: vi.fn(),
 }));
 
 vi.mock("@/features/dashboard/dashboardApi", () => ({
   useGetConsolidatedProfitLossQuery: reportMocks.profit,
   useGetOutstandingBalancesQuery: reportMocks.balances,
   useGetStockSummaryQuery: reportMocks.stock,
+  useGetDepartmentProfitLossQuery: reportMocks.departmentProfit,
+}));
+
+vi.mock("@/features/vehicles/vehiclesApi", () => ({
+  useListDepartmentsQuery: () => ({
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+    data: { data: [{ id: "department-1", name: "Supply" }] },
+  }),
 }));
 
 import { DashboardPage } from "@/features/dashboard/components/DashboardPage";
@@ -78,6 +89,21 @@ beforeEach(() => {
         ],
         movements: [],
       },
+    },
+  });
+  reportMocks.departmentProfit.mockReturnValue({
+    ...queryState,
+    data: {
+      data: [
+        {
+          departmentId: "department-1",
+          departmentName: "Supply",
+          departmentType: "SUPPLY",
+          revenue: "1000",
+          cogs: "400",
+          grossProfit: "600",
+        },
+      ],
     },
   });
 });

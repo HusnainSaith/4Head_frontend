@@ -34,6 +34,7 @@ import {
   type Party,
 } from "@/features/parties/types";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { useListPartyUsersQuery } from "@/features/users/usersApi";
 
 const externalPartyTypes = [
   PartyType.FARM,
@@ -49,6 +50,7 @@ const optionalUuid = z.union([
 ]);
 
 const partyFormSchema = z.object({
+  userId: optionalUuid,
   partyType: z.enum(externalPartyTypes),
   name: z.string().min(1, "Name is required").max(150),
   phone: z.string().max(30),
@@ -100,6 +102,7 @@ function valuesFor(party?: Party | null): PartyFormValues {
     (candidate) => candidate === party?.partyType,
   );
   return {
+    userId: party?.userId ?? "",
     partyType: partyType ?? PartyType.CUSTOMER,
     name: party?.name ?? "",
     phone: party?.phone ?? "",
@@ -120,6 +123,7 @@ function requestFrom(
   includeOpeningBalance: boolean,
 ): CreatePartyRequest {
   return {
+    userId: optional(values.userId),
     partyType: values.partyType,
     name: values.name,
     phone: optional(values.phone),
@@ -145,6 +149,7 @@ function applyServerFieldErrors(
 
   const fields = new Set<keyof PartyFormValues>([
     "partyType",
+    "userId",
     "name",
     "phone",
     "address",
@@ -180,6 +185,7 @@ export function PartyFormDialog({
   });
   const isEditing = Boolean(party);
   const isSubmitting = createState.isLoading || updateState.isLoading;
+  const partyUsers = useListPartyUsersQuery();
 
   useEffect(() => {
     if (open) {
@@ -189,6 +195,13 @@ export function PartyFormDialog({
 
   const onSubmit = async (values: PartyFormValues) => {
     form.clearErrors("root");
+    if (!party && !values.userId) {
+      form.setError("userId", {
+        type: "manual",
+        message: "Select a user with a party role",
+      });
+      return;
+    }
     try {
       const body = requestFrom(values, !party);
       if (party) {
@@ -231,6 +244,42 @@ export function PartyFormDialog({
               </Alert>
             ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="userId"
+                label="Party user"
+                required={!isEditing}
+                description="Only active users assigned to PARTY, FARM, BROKER, SHOP_OWNER, CUSTOMER, or FACTORY roles are shown."
+              >
+                {(field) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      const user = partyUsers.data?.data.find(
+                        (candidate) => candidate.id === value,
+                      );
+                      if (user) {
+                        form.setValue("name", user.fullName, {
+                          shouldValidate: true,
+                        });
+                        form.setValue("phone", user.phone ?? "");
+                      }
+                    }}
+                  >
+                    <SelectTrigger aria-label="Party user">
+                      <SelectValue placeholder="Select party user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(partyUsers.data?.data ?? []).map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.fullName} ({user.role?.name ?? "party"})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </FormField>
               <FormField
                 control={form.control}
                 name="name"

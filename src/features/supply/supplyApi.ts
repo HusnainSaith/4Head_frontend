@@ -32,6 +32,8 @@ const saleRefresh = [
   { type: "SupplyStock" as const, id: "CURRENT" },
   { type: "SupplyReport" as const, id: "PROFIT_LOSS" },
   { type: "DepartmentBalance" as const, id: "LIST" },
+  { type: "ConsolidatedReport" as const, id: "PROFIT_LOSS" },
+  { type: "ConsolidatedReport" as const, id: "DEPARTMENTS" },
 ];
 const transferRefresh = [
   { type: "InternalTransfer" as const, id: "LIST" },

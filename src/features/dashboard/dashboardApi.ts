@@ -20,18 +20,31 @@ export interface ConsolidatedProfitLoss {
   perPartnerShare: string;
 }
 
+export interface DepartmentProfitLoss {
+  departmentId: string;
+  departmentName: string;
+  departmentType: "BROKERAGE" | "SUPPLY" | "WASTAGE" | "FRESH_CHICKEN_SHOP";
+  revenue: string;
+  cogs: string;
+  grossProfit: string;
+}
+
 export interface PartnerProfitShare extends ConsolidatedProfitLoss {
   partnerShare: string;
 }
 
 export interface OutstandingBalance {
   partyId: string | null;
+  partyName?: string | null;
+  departmentId?: string | null;
+  departmentName?: string | null;
   balance: string;
 }
 
 export interface StockSummaryItem {
   productId: string;
   departmentId: string;
+  departmentName?: string | null;
   quantityKg: string;
   wac: string;
 }
@@ -76,6 +89,7 @@ export const dashboardApi = apiSlice.injectEndpoints({
         url: "/reports/consolidated-profit-loss",
         params: params ?? undefined,
       }),
+      providesTags: [{ type: "ConsolidatedReport", id: "PROFIT_LOSS" }],
     }),
     getPartnerProfitShare: builder.query<
       ApiResponse<PartnerProfitShare>,
@@ -85,6 +99,17 @@ export const dashboardApi = apiSlice.injectEndpoints({
         url: "/reports/partner-profit-share",
         params: params ?? undefined,
       }),
+      providesTags: [{ type: "ConsolidatedReport", id: "PARTNER_SHARE" }],
+    }),
+    getDepartmentProfitLoss: builder.query<
+      ApiResponse<DepartmentProfitLoss[]>,
+      ReportDateParams | void
+    >({
+      query: (params) => ({
+        url: "/reports/department-profit-loss",
+        params: params ?? undefined,
+      }),
+      providesTags: [{ type: "ConsolidatedReport", id: "DEPARTMENTS" }],
     }),
     getOutstandingBalances: builder.query<
       ApiResponse<OutstandingBalance[]>,
@@ -94,6 +119,7 @@ export const dashboardApi = apiSlice.injectEndpoints({
         url: "/reports/outstanding-balances",
         params: params ?? undefined,
       }),
+      providesTags: [{ type: "ConsolidatedReport", id: "BALANCES" }],
     }),
     getStockSummary: builder.query<
       ApiResponse<StockSummary>,
@@ -103,18 +129,21 @@ export const dashboardApi = apiSlice.injectEndpoints({
         url: "/reports/stock-summary",
         params: params ?? undefined,
       }),
+      providesTags: [{ type: "ConsolidatedReport", id: "STOCK" }],
     }),
     getExpenseBreakdown: builder.query<
       ApiResponse<ExpenseBreakdownItem[]>,
       ReportDateParams & DepartmentReportParams
     >({
       query: (params) => ({ url: "/reports/expense-breakdown", params }),
+      providesTags: [{ type: "ConsolidatedReport", id: "EXPENSES" }],
     }),
     getPayrollSummary: builder.query<
       ApiResponse<PayrollSummaryItem[]>,
       ReportDateParams & DepartmentReportParams
     >({
       query: (params) => ({ url: "/reports/payroll-summary", params }),
+      providesTags: [{ type: "ConsolidatedReport", id: "PAYROLL" }],
     }),
   }),
 });
@@ -122,6 +151,7 @@ export const dashboardApi = apiSlice.injectEndpoints({
 export const {
   useGetConsolidatedProfitLossQuery,
   useGetPartnerProfitShareQuery,
+  useGetDepartmentProfitLossQuery,
   useGetOutstandingBalancesQuery,
   useGetStockSummaryQuery,
   useGetExpenseBreakdownQuery,

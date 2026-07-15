@@ -23,6 +23,8 @@ const saleRefresh = [
   { type: "WastageSale" as const, id: "LIST" },
   { type: "WastageStock" as const, id: "CURRENT" },
   { type: "DepartmentBalance" as const, id: "LIST" },
+  { type: "ConsolidatedReport" as const, id: "PROFIT_LOSS" },
+  { type: "ConsolidatedReport" as const, id: "DEPARTMENTS" },
 ];
 
 export const wastageApi = apiSlice.injectEndpoints({

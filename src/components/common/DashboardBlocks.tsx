@@ -9,7 +9,9 @@ import {
 
 export function StatCardGrid({ children }: { children: ReactNode }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{children}</div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      {children}
+    </div>
   );
 }
 
@@ -34,5 +36,7 @@ export function DashboardSection({
 }
 
 export function QuickLinkGrid({ children }: { children: ReactNode }) {
-  return <div className="flex flex-wrap gap-2">{children}</div>;
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{children}</div>
+  );
 }

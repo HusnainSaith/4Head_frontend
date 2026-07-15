@@ -13,6 +13,7 @@ export interface Notification {
   status: NotificationStatus;
   errorMessage?: string;
   sentAt?: string;
+  context?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,5 +28,11 @@ export interface NotificationQueryParams {
 
 export interface NotificationPage {
   items: Notification[];
-  pagination: { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+  };
 }

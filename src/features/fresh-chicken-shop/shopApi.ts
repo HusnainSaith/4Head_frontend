@@ -22,6 +22,8 @@ const saleRefresh = [
   { type: "FreshChickenStock" as const, id: "CURRENT" },
   { type: "ShopReport" as const, id: "PROFIT_LOSS" },
   { type: "DepartmentBalance" as const, id: "LIST" },
+  { type: "ConsolidatedReport" as const, id: "PROFIT_LOSS" },
+  { type: "ConsolidatedReport" as const, id: "DEPARTMENTS" },
 ];
 const writeoffRefresh = [
   { type: "FreshChickenStock" as const, id: "CURRENT" },

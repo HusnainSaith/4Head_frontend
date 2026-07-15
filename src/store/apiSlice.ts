@@ -140,6 +140,8 @@ export const apiSlice = createApi({
     "ShopSale",
     "ShopReport",
     "User",
+    "Role",
+    "ConsolidatedReport",
     "Invoice",
     "Notification",
     "DepartmentBalance",

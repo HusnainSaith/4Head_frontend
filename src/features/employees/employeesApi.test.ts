@@ -71,6 +71,26 @@ describe("employeesApi", () => {
       "/employees/e1/bonuses",
     ]);
   });
+  it("uses the employee update, delete, and activate routes", async () => {
+    await dispatch(
+      api.endpoints.updateEmployee.initiate({
+        id: "e1",
+        body: { designation: "Manager" },
+      }),
+    );
+    await dispatch(api.endpoints.deactivateEmployee.initiate("e1"));
+    await dispatch(api.endpoints.activateEmployee.initiate("e1"));
+    expect(requests).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ url: "/employees/e1", method: "PATCH" }),
+        expect.objectContaining({ url: "/employees/e1", method: "DELETE" }),
+        expect.objectContaining({
+          url: "/employees/e1/activate",
+          method: "PATCH",
+        }),
+      ]),
+    );
+  });
   it("passes payroll filters and payment body", async () => {
     await dispatch(
       api.endpoints.listSalaryRuns.initiate({

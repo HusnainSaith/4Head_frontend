@@ -58,6 +58,7 @@ function renderPage(partyId = "party-1") {
 function makeParty(overrides: Partial<Party> = {}): Party {
   return {
     id: "party-1",
+    userId: null,
     partyType: PartyType.FARM,
     name: "Test Farm",
     phone: null,
@@ -131,6 +132,19 @@ describe("PartyStatementPage", () => {
     setupSuccessfulQueries();
     renderPage();
     expect(screen.getByText("Test Farm")).toBeInTheDocument();
+  });
+
+  it("shows receivable/payable totals and prints the statement", async () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    setupSuccessfulQueries();
+    renderPage();
+    expect(screen.getByText("Receivable from party")).toBeInTheDocument();
+    expect(screen.getByText("Payable to party")).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: /print statement/i }),
+    );
+    expect(print).toHaveBeenCalled();
+    print.mockRestore();
   });
 
   it("renders statement entry rows", () => {

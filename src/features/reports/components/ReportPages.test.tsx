@@ -206,11 +206,11 @@ describe("report pages", () => {
       resolve(process.cwd(), "src/routes/AppRoutes.tsx"),
       "utf8",
     );
-    expect(routes).toContain(
-      'path="reports/partner-profit-share" element={<RoleGuard allowedRoles={managementRoles}>',
+    expect(routes).toMatch(
+      /path="reports\/partner-profit-share"[\s\S]*?<RoleGuard allowedRoles=\{managementRoles\}>[\s\S]*?<PartnerProfitSharePage \/>/,
     );
-    expect(routes).toContain(
-      'path="reports/payroll-summary" element={<RoleGuard allowedRoles={managementRoles}>',
+    expect(routes).toMatch(
+      /path="reports\/payroll-summary"[\s\S]*?<RoleGuard allowedRoles=\{managementRoles\}>[\s\S]*?<PayrollSummaryPage \/>/,
     );
   });
 });

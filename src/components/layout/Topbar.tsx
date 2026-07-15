@@ -32,7 +32,7 @@ export function Topbar({
   isLoggingOut: boolean;
 }) {
   return (
-    <header className="flex h-[64px] items-center justify-between border-b border-border bg-card px-6">
+    <header id="app-topbar" className="flex h-[64px] items-center justify-between border-b border-border bg-card px-6">
       {/* Page context slot — empty for now, keeps layout balanced */}
       <div />
 

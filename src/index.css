@@ -25,7 +25,12 @@ body {
 }
 
 /* Slightly tighter font tracking for headings */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   letter-spacing: -0.02em;
 }
 
@@ -35,19 +40,32 @@ h1, h2, h3, h4, h5, h6 {
   outline-offset: 2px;
 }
 
-/* Scrollbar styling for the sidebar and table containers */
-@media (hover: hover) {
-  .sidebar-scroll::-webkit-scrollbar {
-    width: 4px;
+/* Keep sidebar navigation scrollable without showing a visual scrollbar. */
+.sidebar-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@media print {
+  #app-sidebar,
+  #app-topbar,
+  .print\:hidden {
+    display: none !important;
   }
-  .sidebar-scroll::-webkit-scrollbar-track {
-    background: transparent;
+
+  body,
+  #root {
+    background: white !important;
   }
-  .sidebar-scroll::-webkit-scrollbar-thumb {
-    background: hsl(221 30% 25% / 0.4);
-    border-radius: 999px;
-  }
-  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-    background: hsl(221 30% 25% / 0.6);
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
   }
 }

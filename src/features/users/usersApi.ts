@@ -21,6 +21,30 @@ export const usersApi = apiSlice.injectEndpoints({
       query: () => "/users/roles",
       providesTags: [{ type: "User", id: "ROLES" }],
     }),
+    listDrivers: builder.query<
+      ApiResponse<User[]>,
+      { departmentId?: string } | void
+    >({
+      query: (params) => ({
+        url: "/users/drivers",
+        params: params ?? undefined,
+      }),
+      providesTags: [{ type: "User", id: "DRIVERS" }],
+    }),
+    listEmployeeUsers: builder.query<
+      ApiResponse<User[]>,
+      { departmentId?: string } | void
+    >({
+      query: (params) => ({
+        url: "/users/employees",
+        params: params ?? undefined,
+      }),
+      providesTags: [{ type: "User", id: "EMPLOYEE_USERS" }],
+    }),
+    listPartyUsers: builder.query<ApiResponse<User[]>, void>({
+      query: () => "/users/party-users",
+      providesTags: [{ type: "User", id: "PARTY_USERS" }],
+    }),
     createUser: builder.mutation<ApiResponse<User>, CreateUserRequest>({
       query: (body) => ({ url: "/users", method: "POST", body }),
       invalidatesTags: [{ type: "User", id: "LIST" }],
@@ -48,6 +72,9 @@ export const usersApi = apiSlice.injectEndpoints({
 export const {
   useListUsersQuery,
   useListUserRolesQuery,
+  useListDriversQuery,
+  useListEmployeeUsersQuery,
+  useListPartyUsersQuery,
   useCreateUserMutation,
   useUpdateUserMutation,
   useDeactivateUserMutation,

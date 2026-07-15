@@ -34,6 +34,7 @@ import { PartiesListPage } from "@/features/parties/components/PartiesListPage";
 function makeParty(overrides: Partial<Party> = {}): Party {
   return {
     id: "party-1",
+    userId: null,
     partyType: PartyType.FARM,
     name: "Test Farm",
     phone: null,

@@ -32,6 +32,8 @@ const refreshTransactionState = [
   { type: "BrokerageReport" as const, id: "PROFIT_LOSS" },
   { type: "BrokerageStockMovement" as const, id: "LIST" },
   { type: "DepartmentBalance" as const, id: "LIST" },
+  { type: "ConsolidatedReport" as const, id: "PROFIT_LOSS" },
+  { type: "ConsolidatedReport" as const, id: "DEPARTMENTS" },
 ];
 
 export const brokerageApi = apiSlice.injectEndpoints({

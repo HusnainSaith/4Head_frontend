@@ -80,14 +80,20 @@ const roleLabels: Record<Role, string> = {
   [Role.EMPLOYEE]: "Employee",
 };
 
-function RoleBadge({ role }: { role: Role | undefined }) {
+function roleLabel(role: string): string {
+  return roleLabels[role as Role] ?? role.replaceAll("_", " ");
+}
+
+function RoleBadge({ role }: { role: string | undefined }) {
   const variant =
     role === Role.OWNER
       ? "default"
       : role === Role.ACCOUNTANT
         ? "secondary"
         : "warning";
-  return <Badge variant={variant}>{role ? roleLabels[role] : "Unassigned"}</Badge>;
+  return (
+    <Badge variant={variant}>{role ? roleLabel(role) : "Unassigned"}</Badge>
+  );
 }
 
 export function UsersListPage() {
@@ -97,20 +103,23 @@ export function UsersListPage() {
   const departments = useListDepartmentsQuery();
   const [selected, setSelected] = useState<User | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [pendingDeactivation, setPendingDeactivation] = useState<User | null>(null);
+  const [pendingDeactivation, setPendingDeactivation] = useState<User | null>(
+    null,
+  );
   const [deactivate, deactivateState] = useDeactivateUserMutation();
 
   const columns: DataTableColumn<User>[] = [
     { id: "name", header: "Full name", cell: (user) => user.fullName },
     { id: "email", header: "Email", cell: (user) => user.email },
-    { id: "role", header: "Role", cell: (user) => <RoleBadge role={user.role?.name} /> },
+    {
+      id: "role",
+      header: "Role",
+      cell: (user) => <RoleBadge role={user.role?.name} />,
+    },
     {
       id: "department",
       header: "Department",
-      cell: (user) =>
-        user.role?.name === Role.DEPARTMENT_STAFF
-          ? (user.department?.name ?? "—")
-          : "—",
+      cell: (user) => user.department?.name ?? "—",
     },
     { id: "phone", header: "Phone", cell: (user) => user.phone || "—" },
     {
@@ -272,6 +281,13 @@ function UserFormDialog({
 
   const selectedRoleId = useWatch({ control: form.control, name: "roleId" });
   const selectedRole = roles.find((role) => role.id === selectedRoleId)?.name;
+  const selectedRoleKey = selectedRole?.toLowerCase();
+  const departmentApplicable =
+    Boolean(selectedRoleKey) &&
+    selectedRoleKey !== Role.OWNER &&
+    selectedRoleKey !== Role.ACCOUNTANT;
+  const departmentRequired =
+    selectedRoleKey === Role.DEPARTMENT_STAFF || selectedRoleKey === "driver";
   const isLoading = createState.isLoading || updateState.isLoading;
 
   const submit = form.handleSubmit(async (values) => {
@@ -279,10 +295,7 @@ function UserFormDialog({
       form.setError("password", { message: "Password is required" });
       return;
     }
-    if (
-      selectedRole === Role.DEPARTMENT_STAFF &&
-      !values.departmentId
-    ) {
+    if (departmentRequired && !values.departmentId) {
       form.setError("departmentId", { message: "Department is required" });
       return;
     }
@@ -292,10 +305,9 @@ function UserFormDialog({
           fullName: values.fullName,
           email: values.email,
           roleId: values.roleId,
-          departmentId:
-            selectedRole === Role.DEPARTMENT_STAFF
-              ? values.departmentId
-              : null,
+          departmentId: departmentApplicable
+            ? values.departmentId || null
+            : null,
           phone: values.phone || undefined,
           ...(values.password ? { password: values.password } : {}),
         };
@@ -307,10 +319,9 @@ function UserFormDialog({
           email: values.email,
           password: values.password,
           roleId: values.roleId,
-          departmentId:
-            selectedRole === Role.DEPARTMENT_STAFF
-              ? values.departmentId
-              : undefined,
+          departmentId: departmentApplicable
+            ? values.departmentId || undefined
+            : undefined,
           phone: values.phone || undefined,
         };
         await createUser(body).unwrap();
@@ -341,11 +352,23 @@ function UserFormDialog({
         ) : (
           <Form {...form}>
             <form className="grid gap-4 sm:grid-cols-2" onSubmit={submit}>
-              <FormField control={form.control} name="fullName" label="Full name" required>
+              <FormField
+                control={form.control}
+                name="fullName"
+                label="Full name"
+                required
+              >
                 {(field) => <Input {...field} autoComplete="name" />}
               </FormField>
-              <FormField control={form.control} name="email" label="Email" required>
-                {(field) => <Input {...field} type="email" autoComplete="email" />}
+              <FormField
+                control={form.control}
+                name="email"
+                label="Email"
+                required
+              >
+                {(field) => (
+                  <Input {...field} type="email" autoComplete="email" />
+                )}
               </FormField>
               <FormField
                 control={form.control}
@@ -353,30 +376,50 @@ function UserFormDialog({
                 label={user ? "New password" : "Initial password"}
                 required={!user}
               >
-                {(field) => <Input {...field} type="password" autoComplete="new-password" />}
+                {(field) => (
+                  <Input
+                    {...field}
+                    type="password"
+                    autoComplete="new-password"
+                  />
+                )}
               </FormField>
               <FormField control={form.control} name="phone" label="Phone">
                 {(field) => <Input {...field} type="tel" autoComplete="tel" />}
               </FormField>
-              <FormField control={form.control} name="roleId" label="Role" required>
+              <FormField
+                control={form.control}
+                name="roleId"
+                label="Role"
+                required
+              >
                 {(field) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
                     <SelectContent>
                       {roles.map((role) => (
                         <SelectItem key={role.id} value={role.id}>
-                          {roleLabels[role.name]}
+                          {roleLabel(role.name)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
               </FormField>
-              {selectedRole === Role.DEPARTMENT_STAFF ? (
-                <FormField control={form.control} name="departmentId" label="Department" required>
+              {departmentApplicable ? (
+                <FormField
+                  control={form.control}
+                  name="departmentId"
+                  label="Department"
+                  required={departmentRequired}
+                >
                   {(field) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
                       <SelectContent>
                         {departments.map((department) => (
                           <SelectItem key={department.id} value={department.id}>
@@ -389,7 +432,11 @@ function UserFormDialog({
                 </FormField>
               ) : null}
               <DialogFooter className="sm:col-span-2">
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" isLoading={isLoading}>

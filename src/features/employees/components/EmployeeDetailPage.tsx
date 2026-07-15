@@ -21,6 +21,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   selectUserDepartmentId,
   selectUserRole,
 } from "@/features/auth/authSlice";
@@ -29,6 +36,7 @@ import { Role } from "@/types/enums";
 import {
   useCreateAdvanceMutation,
   useCreateBonusMutation,
+  useConfirmAdvanceMutation,
   useGetEmployeeQuery,
   useListAdvancesQuery,
   useListBonusesQuery,
@@ -44,7 +52,11 @@ const recordSchema = z.object({
   date: z.string().min(1),
   reason: z.string(),
 });
-export function EmployeeDetailPage() {
+export function EmployeeDetailPage({
+  mode = "all",
+}: {
+  mode?: "all" | "advances" | "bonuses";
+}) {
   const { id = "" } = useParams();
   const role = useSelector(selectUserRole);
   const assignedDepartmentId = useSelector(selectUserDepartmentId);
@@ -54,14 +66,24 @@ export function EmployeeDetailPage() {
     role !== Role.DEPARTMENT_STAFF ||
     (!!assignedDepartmentId && employeeDepartmentId === assignedDepartmentId);
   const skipEmployeeChildren = !id || !hasDepartmentAccess;
-  const advances = useListAdvancesQuery(id, { skip: skipEmployeeChildren });
-  const bonuses = useListBonusesQuery(id, { skip: skipEmployeeChildren });
+  const skipAdvances = skipEmployeeChildren || mode === "bonuses";
+  const skipBonuses = skipEmployeeChildren || mode === "advances";
+  const advances = useListAdvancesQuery(id, { skip: skipAdvances });
+  const bonuses = useListBonusesQuery(id, { skip: skipBonuses });
   const [dialog, setDialog] = useState<"advance" | "bonus" | null>(null);
+  const [confirmingAdvance, setConfirmingAdvance] =
+    useState<EmployeeAdvance | null>(null);
+  const [advancePaymentMethod, setAdvancePaymentMethod] = useState<
+    "cash" | "bank"
+  >("cash");
   const [createAdvance, advanceState] = useCreateAdvanceMutation();
   const [createBonus, bonusState] = useCreateBonusMutation();
+  const [confirmAdvance, confirmState] = useConfirmAdvanceMutation();
+  const canConfirmAdvance = role === Role.OWNER || role === Role.ACCOUNTANT;
   if (
     employee.isLoading ||
-    (!skipEmployeeChildren && (advances.isLoading || bonuses.isLoading))
+    (!skipAdvances && advances.isLoading) ||
+    (!skipBonuses && bonuses.isLoading)
   )
     return <PageSkeleton rows={6} />;
   if (employee.data && !hasDepartmentAccess)
@@ -73,15 +95,21 @@ export function EmployeeDetailPage() {
         />
       </PageContainer>
     );
-  if (employee.isError || advances.isError || bonuses.isError)
+  if (
+    employee.isError ||
+    (!skipAdvances && advances.isError) ||
+    (!skipBonuses && bonuses.isError)
+  )
     return (
       <PageContainer>
         <ErrorState
           title="Employee details could not be loaded"
           onRetry={() => {
             void employee.refetch();
-            if (!skipEmployeeChildren) {
+            if (!skipAdvances) {
               void advances.refetch();
+            }
+            if (!skipBonuses) {
               void bonuses.refetch();
             }
           }}
@@ -123,6 +151,26 @@ export function EmployeeDetailPage() {
       cell: (a) =>
         `${money.format(Number(a.amountRecovered))} / ${money.format(Number(a.amount))} (${money.format(Number(a.amount) - Number(a.amountRecovered))} remaining)`,
     },
+    {
+      id: "disbursement",
+      header: "Disbursement",
+      cell: (advance) => (
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={
+              advance.disbursementStatus === "confirmed" ? "success" : "warning"
+            }
+          >
+            {advance.disbursementStatus}
+          </Badge>
+          {canConfirmAdvance && advance.disbursementStatus === "pending" ? (
+            <Button size="sm" onClick={() => setConfirmingAdvance(advance)}>
+              Confirm advance
+            </Button>
+          ) : null}
+        </div>
+      ),
+    },
   ];
   const bonusColumns: DataTableColumn<EmployeeBonus>[] = [
     {
@@ -143,36 +191,40 @@ export function EmployeeDetailPage() {
         title={employee.data?.data.fullName ?? "Employee"}
         description={`${employee.data?.data.designation} · ${employee.data?.data.department?.name ?? ""}`}
       />
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Advances</CardTitle>
-          <Button onClick={() => setDialog("advance")}>Record Advance</Button>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={advanceColumns}
-            data={advances.data?.data ?? []}
-            getRowId={(a) => a.id}
-          />
-          <p className="text-sm text-muted-foreground">
-            Recovery status and amount recovered are updated only by backend
-            payroll processing.
-          </p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Bonuses</CardTitle>
-          <Button onClick={() => setDialog("bonus")}>Record Bonus</Button>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={bonusColumns}
-            data={bonuses.data?.data ?? []}
-            getRowId={(b) => b.id}
-          />
-        </CardContent>
-      </Card>
+      {mode !== "bonuses" ? (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle>Advances</CardTitle>
+            <Button onClick={() => setDialog("advance")}>Record Advance</Button>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={advanceColumns}
+              data={advances.data?.data ?? []}
+              getRowId={(a) => a.id}
+            />
+            <p className="text-sm text-muted-foreground">
+              Recovery status and amount recovered are updated only by backend
+              payroll processing.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+      {mode !== "advances" ? (
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle>Bonuses</CardTitle>
+            <Button onClick={() => setDialog("bonus")}>Record Bonus</Button>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={bonusColumns}
+              data={bonuses.data?.data ?? []}
+              getRowId={(b) => b.id}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
       <RecordDialog
         kind={dialog}
         loading={advanceState.isLoading || bonusState.isLoading}
@@ -202,8 +254,75 @@ export function EmployeeDetailPage() {
           }
         }}
       />
+      <Dialog
+        open={Boolean(confirmingAdvance)}
+        onOpenChange={(open) => !open && setConfirmingAdvance(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm advance payment</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This posts {money.format(Number(confirmingAdvance?.amount ?? 0))}
+            against the employee-advance account and reduces the selected
+            department&apos;s cash or bank balance.
+          </p>
+          <div className="space-y-2">
+            <Label>Payment method</Label>
+            <Select
+              value={advancePaymentMethod}
+              onValueChange={(value) =>
+                setAdvancePaymentMethod(value as "cash" | "bank")
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="bank">Bank</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmingAdvance(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              isLoading={confirmState.isLoading}
+              onClick={() => {
+                if (!confirmingAdvance) return;
+                void confirmAdvance({
+                  employeeId: id,
+                  advanceId: confirmingAdvance.id,
+                  paymentMethod: advancePaymentMethod,
+                })
+                  .unwrap()
+                  .then(() => {
+                    toast.success("Advance confirmed and paid");
+                    setConfirmingAdvance(null);
+                  })
+                  .catch((error) => toast.error(getApiErrorMessage(error)));
+              }}
+            >
+              Confirm and pay
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
+}
+
+export function EmployeeAdvancesPage() {
+  return <EmployeeDetailPage mode="advances" />;
+}
+
+export function EmployeeBonusesPage() {
+  return <EmployeeDetailPage mode="bonuses" />;
 }
 function RecordDialog({
   kind,

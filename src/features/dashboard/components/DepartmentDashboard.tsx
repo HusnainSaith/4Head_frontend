@@ -1,4 +1,4 @@
-import { Boxes, Scale } from "lucide-react";
+import { Boxes, Scale, TrendingDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,8 +75,12 @@ export function DepartmentDashboard() {
     (sum, item) => sum + Number(item.quantityKg || 0),
     0,
   );
-  const outstandingTotal = balanceRows.reduce(
-    (sum, item) => sum + Number(item.balance || 0),
+  const totalReceivable = balanceRows.reduce(
+    (sum, item) => sum + Math.max(Number(item.balance || 0), 0),
+    0,
+  );
+  const totalPayable = balanceRows.reduce(
+    (sum, item) => sum + Math.max(-Number(item.balance || 0), 0),
     0,
   );
 
@@ -93,21 +97,34 @@ export function DepartmentDashboard() {
           icon={Boxes}
         />
         <StatCard
-          label="Outstanding balance"
-          value={money.format(outstandingTotal)}
+          label="Total receivable"
+          value={money.format(totalReceivable)}
           icon={Scale}
+          tone="success"
+        />
+        <StatCard
+          label="Total payable"
+          value={money.format(totalPayable)}
+          icon={TrendingDown}
+          tone="danger"
         />
       </StatCardGrid>
       <DashboardSection title="Today's purchases and sales">
-        <EmptyState
-          title="Coming soon"
-          description="The backend has no current report endpoint for today's department purchases and sales."
-        />
+        <div className="rounded-2xl border border-dashed border-amber-300 bg-gradient-to-br from-amber-50 to-white px-5 py-10 text-center dark:border-amber-900 dark:from-amber-950/20 dark:to-background">
+          <p className="text-lg font-semibold">Coming soon</p>
+          <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
+            Today&apos;s purchase and sales comparison will appear when the
+            department reporting endpoint is available.
+          </p>
+        </div>
       </DashboardSection>
       <DashboardSection title="Quick entry">
         {departmentCode ? (
           <QuickLinkGrid>
-            <Button asChild>
+            <Button
+              asChild
+              className="h-12 border-l-4 border-[#FCA311] bg-[#14213D] text-white hover:bg-[#1c2e52] hover:text-[#FCA311]"
+            >
               <Link to={departmentPath[departmentCode]}>
                 Open department entry
               </Link>

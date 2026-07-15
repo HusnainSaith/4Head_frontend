@@ -2,7 +2,6 @@ import {
   BarChart3,
   Bell,
   Bird,
-  Building2,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
@@ -13,6 +12,7 @@ import {
   UserRoundCog,
   UsersRound,
   Warehouse,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -94,18 +94,56 @@ const navigation = [
     ],
   },
   { label: "Parties", to: "/parties", icon: UsersRound },
-  { label: "Vehicles", to: "/vehicles", icon: Truck },
-  { label: "Employees & Payroll", to: "/employees", icon: UserRoundCog, children: [
-    { label: "Employees", to: "/employees" },
-    { label: "Salary Runs", to: "/payroll/runs", managementOnly: true },
-  ] },
+  {
+    label: "Vehicles",
+    to: "/vehicles",
+    icon: Truck,
+    children: [
+      { label: "Vehicles", to: "/vehicles" },
+      { label: "Fuel Logs", to: "/vehicles/fuel-logs" },
+      { label: "Maintenance Logs", to: "/vehicles/maintenance-logs" },
+    ],
+  },
+  {
+    label: "Employees & Payroll",
+    to: "/employees",
+    icon: UserRoundCog,
+    children: [
+      { label: "Employees", to: "/employees" },
+      { label: "Salary Runs", to: "/payroll/runs", managementOnly: true },
+    ],
+  },
   { label: "Expenses", to: "/expenses", icon: CircleDollarSign },
   { label: "Invoices", to: "/invoices", icon: FileText, managementOnly: true },
-  { label: "Notifications", to: "/notifications", icon: Bell, managementOnly: true },
-  { label: "Reports", to: "/reports/consolidated-profit-loss", icon: FileText, children: [
-    {label:"Consolidated P&L",to:"/reports/consolidated-profit-loss"},{label:"Partner Profit Share",to:"/reports/partner-profit-share"},{label:"Outstanding Balances",to:"/reports/outstanding-balances"},{label:"Stock Summary",to:"/reports/stock-summary"},{label:"Expense Breakdown",to:"/reports/expense-breakdown"},{label:"Payroll Summary",to:"/reports/payroll-summary"},
-  ] },
-  { label: "Users", to: "/users", icon: Building2, ownerOnly: true },
+  {
+    label: "Notifications",
+    to: "/notifications",
+    icon: Bell,
+    managementOnly: true,
+  },
+  {
+    label: "Reports",
+    to: "/reports/consolidated-profit-loss",
+    icon: FileText,
+    children: [
+      { label: "Consolidated P&L", to: "/reports/consolidated-profit-loss" },
+      { label: "Partner Profit Share", to: "/reports/partner-profit-share" },
+      { label: "Outstanding Balances", to: "/reports/outstanding-balances" },
+      { label: "Stock Summary", to: "/reports/stock-summary" },
+      { label: "Expense Breakdown", to: "/reports/expense-breakdown" },
+      { label: "Payroll Summary", to: "/reports/payroll-summary" },
+    ],
+  },
+  {
+    label: "Users & Roles",
+    to: "/users",
+    icon: ShieldCheck,
+    ownerOnly: true,
+    children: [
+      { label: "Users", to: "/users" },
+      { label: "Roles", to: "/roles" },
+    ],
+  },
 ] as const;
 
 function visibleNavigation(
@@ -175,10 +213,16 @@ export function Sidebar({
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <p style={{ color: "#ffffff" }} className="truncate text-sm font-bold tracking-widest uppercase">
+            <p
+              style={{ color: "#ffffff" }}
+              className="truncate text-sm font-bold tracking-widest uppercase"
+            >
               Poultry ERP
             </p>
-            <p style={{ color: COLORS.textMuted }} className="text-xs tracking-widest uppercase">
+            <p
+              style={{ color: COLORS.textMuted }}
+              className="text-xs tracking-widest uppercase"
+            >
               Management
             </p>
           </div>
@@ -186,7 +230,10 @@ export function Sidebar({
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2" aria-label="Primary">
+      <nav
+        className="sidebar-scroll flex-1 overflow-y-auto overflow-x-hidden px-2 py-2"
+        aria-label="Primary"
+      >
         {items.map((item) => {
           const { label, to, icon: Icon } = item;
           const hasChildren = "children" in item;
@@ -198,8 +245,7 @@ export function Sidebar({
             hasChildren &&
             item.children.some(
               (child) =>
-                pathname === child.to ||
-                pathname.startsWith(child.to + "/"),
+                pathname === child.to || pathname.startsWith(child.to + "/"),
             );
           const parentStyle = {
             display: "flex",
@@ -212,9 +258,7 @@ export function Sidebar({
             fontSize: "13px",
             fontWeight: 500,
             color: isSectionActive ? COLORS.textActive : COLORS.text,
-            backgroundColor: isSectionActive
-              ? COLORS.goldBg
-              : "transparent",
+            backgroundColor: isSectionActive ? COLORS.goldBg : "transparent",
             borderLeft: isSectionActive
               ? `3px solid ${COLORS.gold}`
               : "3px solid transparent",
@@ -286,9 +330,7 @@ export function Sidebar({
                         <span
                           style={{
                             ...parentStyle,
-                            color: isActive
-                              ? COLORS.textActive
-                              : COLORS.text,
+                            color: isActive ? COLORS.textActive : COLORS.text,
                             backgroundColor: isActive
                               ? COLORS.goldBg
                               : "transparent",
@@ -299,9 +341,7 @@ export function Sidebar({
                         >
                           <Icon
                             style={{
-                              color: isActive
-                                ? COLORS.textActive
-                                : COLORS.text,
+                              color: isActive ? COLORS.textActive : COLORS.text,
                               flexShrink: 0,
                               width: 18,
                               height: 18,
@@ -369,7 +409,10 @@ export function Sidebar({
       </nav>
 
       {/* Collapse toggle */}
-      <div style={{ borderTop: `1px solid ${COLORS.border}` }} className="shrink-0 p-2">
+      <div
+        style={{ borderTop: `1px solid ${COLORS.border}` }}
+        className="shrink-0 p-2"
+      >
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -393,13 +436,16 @@ export function Sidebar({
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="right">{collapsed ? "Expand" : "Collapse"}</TooltipContent>
+          <TooltipContent side="right">
+            {collapsed ? "Expand" : "Collapse"}
+          </TooltipContent>
         </Tooltip>
       </div>
 
       {role === Role.DEPARTMENT_STAFF && departmentCode ? (
         <span className="sr-only">
-          Department navigation is restricted to {departmentPaths[departmentCode]}.
+          Department navigation is restricted to{" "}
+          {departmentPaths[departmentCode]}.
         </span>
       ) : null}
     </aside>

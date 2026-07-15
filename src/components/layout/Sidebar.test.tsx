@@ -37,7 +37,10 @@ describe("Sidebar", () => {
     expect(screen.getByText("Stock")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Supply" }));
     expect(screen.getByText("Internal Transfers")).toBeInTheDocument();
-    expect(screen.getByText("Users")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Vehicles" }));
+    expect(screen.getByText("Fuel Logs")).toBeInTheDocument();
+    expect(screen.getByText("Maintenance Logs")).toBeInTheDocument();
+    expect(screen.getByText("Users & Roles")).toBeInTheDocument();
   });
 
   it("shows only the assigned section and dashboard to department staff", () => {

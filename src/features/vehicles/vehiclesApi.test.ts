@@ -15,7 +15,9 @@ vi.mock("@/store/apiSlice", async () => {
     apiSlice: makeApi({
       reducerPath: "api",
       baseQuery: (args: unknown) => {
-        requests.push(typeof args === "string" ? { url: args } : (args as Request));
+        requests.push(
+          typeof args === "string" ? { url: args } : (args as Request),
+        );
         return {
           data: {
             data: {
@@ -117,6 +119,46 @@ describe("vehiclesApi", () => {
         }),
         expect.objectContaining({
           url: "/api/v1/vehicles/maintenance-logs/m1",
+          method: "DELETE",
+        }),
+      ]),
+    );
+  });
+
+  it("uses exact vehicle and fuel update/delete routes", async () => {
+    await dispatch(
+      api.endpoints.updateVehicle.initiate({
+        id: "v1",
+        body: { driverUserId: "00000000-0000-4000-8000-000000000010" },
+      }),
+    );
+    await dispatch(api.endpoints.deleteVehicle.initiate("v1"));
+    await dispatch(
+      api.endpoints.updateFuelLog.initiate({
+        id: "f1",
+        vehicleId: "v1",
+        body: { liters: 12 },
+      }),
+    );
+    await dispatch(
+      api.endpoints.deleteFuelLog.initiate({ id: "f1", vehicleId: "v1" }),
+    );
+    expect(requests).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          url: "/api/v1/vehicles/v1",
+          method: "PATCH",
+        }),
+        expect.objectContaining({
+          url: "/api/v1/vehicles/v1",
+          method: "DELETE",
+        }),
+        expect.objectContaining({
+          url: "/api/v1/vehicles/fuel-logs/f1",
+          method: "PATCH",
+        }),
+        expect.objectContaining({
+          url: "/api/v1/vehicles/fuel-logs/f1",
           method: "DELETE",
         }),
       ]),

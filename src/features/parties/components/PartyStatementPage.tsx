@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ReceiptText } from "lucide-react";
+import {
+  ArrowLeft,
+  Printer,
+  ReceiptText,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -12,6 +18,8 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { PageHeader } from "@/components/common/PageHeader";
 import { PageSkeleton } from "@/components/common/Skeletons";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { StatCard } from "@/components/common/StatCard";
+import { StatCardGrid } from "@/components/common/DashboardBlocks";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -173,12 +181,21 @@ function RecordPaymentDialog({
                 </AlertDescription>
               </Alert>
             ) : null}
-            <FormField control={form.control} name="direction" label="Direction" required>
+            <FormField
+              control={form.control}
+              name="direction"
+              label="Direction"
+              required
+            >
               {(field) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="received">Received from party</SelectItem>
+                    <SelectItem value="received">
+                      Received from party
+                    </SelectItem>
                     <SelectItem value="paid">Paid to party</SelectItem>
                   </SelectContent>
                 </Select>
@@ -301,7 +318,7 @@ export function PartyStatementPage() {
       {
         id: "description",
         header: "Description",
-        cell: (entry) => entry.description ?? "?",
+        cell: (entry) => entry.description ?? "—",
       },
       {
         id: "debit",
@@ -310,7 +327,7 @@ export function PartyStatementPage() {
         cell: (entry) =>
           entry.entryType === "debit"
             ? money.format(Number(entry.amount))
-            : "?",
+            : "—",
       },
       {
         id: "credit",
@@ -319,7 +336,7 @@ export function PartyStatementPage() {
         cell: (entry) =>
           entry.entryType === "credit"
             ? money.format(Number(entry.amount))
-            : "?",
+            : "—",
       },
       {
         id: "runningBalance",
@@ -403,20 +420,39 @@ export function PartyStatementPage() {
           </Link>
         }
         actions={
-          <>
+          <div className="flex flex-wrap items-center gap-2 print:hidden">
             <BalanceBadge balance={closingBalance} />
+            <Button variant="outline" onClick={() => window.print()}>
+              <Printer className="h-4 w-4" aria-hidden />
+              Print statement
+            </Button>
             {!isInternal ? (
               <Button onClick={() => setPaymentDialogOpen(true)}>
                 <ReceiptText className="h-4 w-4" aria-hidden />
                 Record payment
               </Button>
             ) : null}
-          </>
+          </div>
         }
       />
 
+      <StatCardGrid>
+        <StatCard
+          label="Receivable from party"
+          value={money.format(Math.max(Number(closingBalance), 0))}
+          icon={TrendingUp}
+          tone="success"
+        />
+        <StatCard
+          label="Payable to party"
+          value={money.format(Math.max(-Number(closingBalance), 0))}
+          icon={TrendingDown}
+          tone="danger"
+        />
+      </StatCardGrid>
+
       {/* Date range filter */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 print:hidden">
         <div className="space-y-2">
           <Label htmlFor="statement-start-date">From</Label>
           <Input
