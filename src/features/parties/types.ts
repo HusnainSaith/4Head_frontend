@@ -27,6 +27,7 @@ export interface Party {
   linkedDepartment?: PartyDepartment | null;
   primaryDepartmentId: string | null;
   primaryDepartment?: PartyDepartment | null;
+  departments: PartyDepartment[];
   openingBalance: string;
   notes: string | null;
   createdAt: string;
@@ -45,6 +46,7 @@ export interface CreatePartyRequest {
   address?: string;
   linkedDepartmentId?: string;
   primaryDepartmentId?: string;
+  departmentIds: string[];
   notes?: string;
   /** Positive = party owes the business (receivable). Negative = business owes the party (payable). */
   openingBalance?: number;

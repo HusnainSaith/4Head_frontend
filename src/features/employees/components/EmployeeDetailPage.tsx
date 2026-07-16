@@ -42,6 +42,7 @@ import {
   useListBonusesQuery,
 } from "../employeesApi";
 import type { EmployeeAdvance, EmployeeBonus } from "../types";
+import { SalaryAccountCard } from "./SalaryAccountCard";
 
 const money = new Intl.NumberFormat("en-PK", {
   style: "currency",
@@ -191,6 +192,9 @@ export function EmployeeDetailPage({
         title={employee.data?.data.fullName ?? "Employee"}
         description={`${employee.data?.data.designation} · ${employee.data?.data.department?.name ?? ""}`}
       />
+      {mode === "all" && (role === Role.OWNER || role === Role.ACCOUNTANT) ? (
+        <SalaryAccountCard employeeId={id} />
+      ) : null}
       {mode !== "bonuses" ? (
         <Card>
           <CardHeader className="flex-row items-center justify-between">

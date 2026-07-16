@@ -59,7 +59,10 @@ function renderDialog(props: {
         open={props.open ?? true}
         onOpenChange={props.onOpenChange ?? vi.fn()}
         party={props.party ?? null}
-        departmentOptions={[]}
+        departmentOptions={[
+          { id: "00000000-0000-4000-8000-000000000001", name: "Supply" },
+          { id: "00000000-0000-4000-8000-000000000002", name: "Wastage" },
+        ]}
       />
     </Provider>,
   );
@@ -74,7 +77,10 @@ function makeParty(overrides: Partial<Party> = {}): Party {
     phone: null,
     address: null,
     linkedDepartmentId: null,
-    primaryDepartmentId: null,
+    primaryDepartmentId: "00000000-0000-4000-8000-000000000001",
+    departments: [
+      { id: "00000000-0000-4000-8000-000000000001", name: "Supply" },
+    ],
     openingBalance: "0",
     notes: null,
     createdAt: "2025-01-01T00:00:00.000Z",
@@ -148,6 +154,7 @@ describe("PartyFormDialog", () => {
     const name = screen.getByRole("textbox", { name: /^name/i });
     await userEvent.clear(name);
     await userEvent.type(name, "New Farm");
+    await userEvent.click(screen.getAllByText("Supply").at(-1)!);
     await userEvent.click(
       screen.getByRole("button", { name: /create party/i }),
     );
@@ -158,6 +165,7 @@ describe("PartyFormDialog", () => {
           name: "New Farm",
           userId: "00000000-0000-4000-8000-000000000099",
           partyType: PartyType.CUSTOMER,
+          departmentIds: ["00000000-0000-4000-8000-000000000001"],
         }),
       );
     });

@@ -27,6 +27,7 @@ vi.mock("@/store/apiSlice", async () => {
         "Expense",
         "DepartmentBalance",
         "ConsolidatedReport",
+        "DressingBatch",
       ] as const,
       endpoints: () => ({}),
     }),
@@ -62,8 +63,7 @@ describe("shopApi contracts", () => {
     expect(requests[0].url).toBe("/shop/sales");
 
     const body = {
-      liveWeightKg: 6,
-      dressedWeightKg: 5,
+      quantityKg: 5,
       ratePerKg: 300,
       paymentMethod: "cash" as const,
       saleDate: "2026-07-12",
@@ -106,6 +106,7 @@ describe("shopApi contracts", () => {
       quantityKg: 2,
       reason: "spoilage" as const,
       writeoffDate: "2026-07-12",
+      stockType: "live" as const,
     };
     await dispatch(api.endpoints.createShopStockWriteoff.initiate(body));
     expect(requests[0]).toMatchObject({
@@ -138,8 +139,7 @@ describe("shopApi contracts", () => {
     await sub;
     await dispatch(
       api.endpoints.createShopSale.initiate({
-        liveWeightKg: 1,
-        dressedWeightKg: 0.75,
+        quantityKg: 0.75,
         ratePerKg: 100,
         paymentMethod: "cash",
         saleDate: "2026-07-12",

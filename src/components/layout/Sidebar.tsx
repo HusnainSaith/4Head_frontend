@@ -88,6 +88,7 @@ const navigation = [
     department: DepartmentCode.FRESH_CHICKEN_SHOP,
     children: [
       { label: "Incoming Transfers", to: "/shop/incoming-transfers" },
+      { label: "Dressing Batches", to: "/shop/dressing-batches" },
       { label: "Sales", to: "/shop/sales" },
       { label: "Stock", to: "/shop/stock" },
       { label: "Reports", to: "/shop/reports/profit-loss" },

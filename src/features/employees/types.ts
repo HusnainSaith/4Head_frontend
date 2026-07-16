@@ -58,7 +58,7 @@ export interface CreateBonusRequest {
   bonusDate: string;
   reason?: string;
 }
-export type PaymentStatus = "pending" | "paid";
+export type PaymentStatus = "pending" | "partially_paid" | "paid";
 export interface SalaryRun {
   id: string;
   employeeId: string;
@@ -70,6 +70,7 @@ export interface SalaryRun {
   totalAdvancesDeducted: string;
   netPayable: string;
   paymentStatus: PaymentStatus;
+  amountPaid: string;
   paidDate?: string | null;
   paymentMethod?: "cash" | "bank" | null;
   bonuses?: EmployeeBonus[];
@@ -83,4 +84,33 @@ export interface RunPayrollRequest {
 export interface PaySalaryRunRequest {
   paidDate: string;
   paymentMethod: "cash" | "bank";
+  amount?: number;
+}
+
+export interface SalaryWithdrawalAllocation {
+  id: string;
+  amount: string;
+  salaryRun: SalaryRun;
+}
+export interface SalaryWithdrawal {
+  id: string;
+  amount: string;
+  withdrawalDate: string;
+  paymentMethod: "cash" | "bank";
+  notes?: string;
+  allocations: SalaryWithdrawalAllocation[];
+}
+export interface SalaryAccount {
+  employeeId: string;
+  totalAccrued: string;
+  totalWithdrawn: string;
+  availableBalance: string;
+  runs: SalaryRun[];
+  withdrawals: SalaryWithdrawal[];
+}
+export interface CreateSalaryWithdrawalRequest {
+  amount: number;
+  withdrawalDate: string;
+  paymentMethod: "cash" | "bank";
+  notes?: string;
 }

@@ -244,6 +244,11 @@ const ShopStockPage = lazy(() =>
     (m) => ({ default: m.ShopStockPage }),
   ),
 );
+const DressingBatchesPage = lazy(() =>
+  import("@/features/fresh-chicken-shop/components/DressingBatchesPage").then(
+    (m) => ({ default: m.DressingBatchesPage }),
+  ),
+);
 const ShopReportPage = lazy(() =>
   import("@/features/fresh-chicken-shop/components/ShopReportPage").then(
     (m) => ({ default: m.ShopReportPage }),
@@ -687,6 +692,14 @@ export function AppRoutes() {
             element={
               <ShopAccess>
                 <ShopStockPage />
+              </ShopAccess>
+            }
+          />
+          <Route
+            path="shop/dressing-batches"
+            element={
+              <ShopAccess>
+                <DressingBatchesPage />
               </ShopAccess>
             }
           />

@@ -9,16 +9,38 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import type { InternalTransfer } from "@/features/supply/types";
 import { useGetShopIncomingTransfersQuery } from "../shopApi";
 
-const money = new Intl.NumberFormat("en-PK", { style: "currency", currency: "PKR" });
+const money = new Intl.NumberFormat("en-PK", {
+  style: "currency",
+  currency: "PKR",
+});
 
 const statusVariant = (s: InternalTransfer["settlementStatus"]) =>
   s === "settled" ? "success" : s === "unsettled" ? "warning" : "secondary";
 
 const columns: DataTableColumn<InternalTransfer>[] = [
-  { id: "date", header: "Transfer date", cell: (r) => String(r.transferDate).slice(0, 10) },
-  { id: "qty", header: "Quantity (kg)", cell: (r) => `${r.quantityKg} kg`, align: "right" },
-  { id: "rate", header: "Internal rate/kg", cell: (r) => money.format(Number(r.internalRatePerKg)), align: "right" },
-  { id: "total", header: "Total", cell: (r) => money.format(Number(r.totalAmount)), align: "right" },
+  {
+    id: "date",
+    header: "Transfer date",
+    cell: (r) => String(r.transferDate).slice(0, 10),
+  },
+  {
+    id: "qty",
+    header: "Quantity (kg)",
+    cell: (r) => `${r.quantityKg} kg`,
+    align: "right",
+  },
+  {
+    id: "rate",
+    header: "Internal rate/kg",
+    cell: (r) => money.format(Number(r.internalRatePerKg)),
+    align: "right",
+  },
+  {
+    id: "total",
+    header: "Total",
+    cell: (r) => money.format(Number(r.totalAmount)),
+    align: "right",
+  },
   {
     id: "status",
     header: "Settlement status",
@@ -28,7 +50,12 @@ const columns: DataTableColumn<InternalTransfer>[] = [
       </Badge>
     ),
   },
-  { id: "settled", header: "Amount settled", cell: (r) => money.format(Number(r.amountSettled)), align: "right" },
+  {
+    id: "settled",
+    header: "Amount settled",
+    cell: (r) => money.format(Number(r.amountSettled)),
+    align: "right",
+  },
 ];
 
 export function IncomingTransfersPage() {
@@ -60,7 +87,8 @@ export function IncomingTransfersPage() {
       />
       <p className="text-sm text-muted-foreground mt-2">
         To create a transfer or record a settlement, go to{" "}
-        <strong>Supply → Internal Transfers</strong> (available to Owner and Accountant roles).
+        <strong>Supply → Internal Transfers</strong> (available to Owner and
+        Accountant roles).
       </p>
     </PageContainer>
   );

@@ -57,7 +57,9 @@ export function SalaryRunDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <InvoiceButton sourceType="salary" sourceId={run.id} />
-            <Badge variant={run.paymentStatus === "paid" ? "success" : "warning"}>
+            <Badge
+              variant={run.paymentStatus === "paid" ? "success" : "warning"}
+            >
               {run.paymentStatus}
             </Badge>
           </div>

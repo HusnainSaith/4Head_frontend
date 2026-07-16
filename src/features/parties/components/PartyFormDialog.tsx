@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   useCreatePartyMutation,
   useUpdatePartyMutation,
@@ -55,8 +56,10 @@ const partyFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(150),
   phone: z.string().max(30),
   address: z.string().max(255),
-  linkedDepartmentId: optionalUuid,
   primaryDepartmentId: optionalUuid,
+  departmentIds: z
+    .array(z.string().uuid())
+    .min(1, "Select at least one linked department"),
   notes: z.string(),
   /**
    * Positive = party owes the business (receivable/asset).
@@ -107,8 +110,12 @@ function valuesFor(party?: Party | null): PartyFormValues {
     name: party?.name ?? "",
     phone: party?.phone ?? "",
     address: party?.address ?? "",
-    linkedDepartmentId: party?.linkedDepartmentId ?? "",
     primaryDepartmentId: party?.primaryDepartmentId ?? "",
+    departmentIds:
+      party?.departments?.map(({ id }) => id) ??
+      [party?.primaryDepartmentId, party?.linkedDepartmentId].filter(
+        (id): id is string => Boolean(id),
+      ),
     notes: party?.notes ?? "",
     openingBalance: party ? String(party.openingBalance ?? "0") : "",
   };
@@ -128,8 +135,8 @@ function requestFrom(
     name: values.name,
     phone: optional(values.phone),
     address: optional(values.address),
-    linkedDepartmentId: optional(values.linkedDepartmentId),
     primaryDepartmentId: optional(values.primaryDepartmentId),
+    departmentIds: values.departmentIds,
     notes: optional(values.notes),
     ...(includeOpeningBalance && values.openingBalance !== ""
       ? { openingBalance: Number(values.openingBalance) }
@@ -153,8 +160,8 @@ function applyServerFieldErrors(
     "name",
     "phone",
     "address",
-    "linkedDepartmentId",
     "primaryDepartmentId",
+    "departmentIds",
     "notes",
     "openingBalance",
   ]);
@@ -321,12 +328,43 @@ export function PartyFormDialog({
                 label="Primary department"
                 options={departmentOptions}
               />
-              <DepartmentField
-                control={form.control}
-                name="linkedDepartmentId"
-                label="Linked department"
-                options={departmentOptions}
-              />
+              <div className="sm:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="departmentIds"
+                  label="Linked departments"
+                  required
+                  description="Select every department allowed to transact with this party."
+                >
+                  {(field) => (
+                    <div className="grid gap-2 rounded-md border p-3 sm:grid-cols-2">
+                      {departmentOptions.map((option) => (
+                        <label
+                          key={option.id}
+                          className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-muted"
+                        >
+                          <Checkbox
+                            checked={field.value.includes(option.id)}
+                            onCheckedChange={(checked) => {
+                              const values = checked
+                                ? [...field.value, option.id]
+                                : field.value.filter((id) => id !== option.id);
+                              field.onChange(values);
+                              if (
+                                checked &&
+                                !form.getValues("primaryDepartmentId")
+                              ) {
+                                form.setValue("primaryDepartmentId", option.id);
+                              }
+                            }}
+                          />
+                          <span>{option.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </FormField>
+              </div>
               {!isEditing ? (
                 <FormField
                   control={form.control}
@@ -374,7 +412,7 @@ function DepartmentField({
   options,
 }: {
   control: ReturnType<typeof useForm<PartyFormValues>>["control"];
-  name: "primaryDepartmentId" | "linkedDepartmentId";
+  name: "primaryDepartmentId";
   label: string;
   options: DepartmentOption[];
 }) {

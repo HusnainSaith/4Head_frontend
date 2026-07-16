@@ -10,6 +10,9 @@ import type {
   PaySalaryRunRequest,
   RunPayrollRequest,
   SalaryRun,
+  SalaryAccount,
+  SalaryWithdrawal,
+  CreateSalaryWithdrawalRequest,
 } from "./types";
 
 export const employeesApi = apiSlice.injectEndpoints({
@@ -115,6 +118,8 @@ export const employeesApi = apiSlice.injectEndpoints({
       invalidatesTags: (_r, _e, b) => [
         { type: "SalaryRun", id: "LIST" },
         { type: "EmployeeAdvance", id: b.employeeId },
+        { type: "SalaryAccount", id: b.employeeId },
+        { type: "ConsolidatedReport", id: "PROFIT_LOSS" },
       ],
     }),
     listSalaryRuns: builder.query<
@@ -160,6 +165,26 @@ export const employeesApi = apiSlice.injectEndpoints({
         { type: "ShopReport", id: "PROFIT_LOSS" },
       ],
     }),
+    getSalaryAccount: builder.query<ApiResponse<SalaryAccount>, string>({
+      query: (employeeId) => `/employees/${employeeId}/salary-account`,
+      providesTags: (_r, _e, employeeId) => [
+        { type: "SalaryAccount", id: employeeId },
+      ],
+    }),
+    withdrawSalary: builder.mutation<
+      ApiResponse<SalaryWithdrawal>,
+      { employeeId: string; body: CreateSalaryWithdrawalRequest }
+    >({
+      query: ({ employeeId, body }) => ({
+        url: `/employees/${employeeId}/salary-account/withdrawals`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { employeeId }) => [
+        { type: "SalaryAccount", id: employeeId },
+        { type: "SalaryRun", id: "LIST" },
+      ],
+    }),
   }),
 });
 export const {
@@ -178,4 +203,6 @@ export const {
   useListSalaryRunsQuery,
   useGetSalaryRunQuery,
   useMarkSalaryRunPaidMutation,
+  useGetSalaryAccountQuery,
+  useWithdrawSalaryMutation,
 } = employeesApi;

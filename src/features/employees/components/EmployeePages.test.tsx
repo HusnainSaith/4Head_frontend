@@ -105,6 +105,19 @@ vi.mock("../employeesApi", () => ({
     isLoading: false,
   }),
   useMarkSalaryRunPaidMutation: () => [pay, { isLoading: false }],
+  useGetSalaryAccountQuery: () => ({
+    data: {
+      data: {
+        employeeId: "e1",
+        totalAccrued: "10200.00",
+        totalWithdrawn: "0.00",
+        availableBalance: "10200.00",
+        runs: [],
+        withdrawals: [],
+      },
+    },
+  }),
+  useWithdrawSalaryMutation: () => [vi.fn(), { isLoading: false }],
 }));
 const route = (path: string, node: React.ReactNode) =>
   render(

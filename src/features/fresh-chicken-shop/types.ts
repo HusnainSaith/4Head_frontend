@@ -7,15 +7,11 @@ export interface ShopSale {
   departmentId: string;
   customerPartyId?: string | null;
   customerParty?: { id: string; name: string; partyType: string } | null;
-  liveWeightKg: string;
-  dressedWeightKg: string;
-  shrinkageKg: string;
+  quantityKg: string;
   ratePerKg: string;
   wacAtSale: string;
   totalAmount: string;
-  cogsAmount: string;
-  processingLossAmount: string;
-  grossProfitAmount: string;
+  profitMarginPerKg: string;
   paymentMethod: "cash" | "bank" | "credit";
   amountReceived: string;
   outstandingAmount: string;
@@ -29,8 +25,7 @@ export interface ShopSale {
 /** Mirrors CreateShopSaleDto. Derived amounts are backend-owned. */
 export interface CreateSaleRequest {
   customerPartyId?: string;
-  liveWeightKg: number;
-  dressedWeightKg: number;
+  quantityKg: number;
   ratePerKg: number;
   paymentMethod: "cash" | "bank" | "credit";
   amountReceived?: number;
@@ -46,6 +41,7 @@ export interface StockWriteoffRequest {
   reason: "spoilage" | "mortality" | "transit_loss" | "other";
   note?: string;
   writeoffDate: string;
+  stockType: "live" | "dressed";
 }
 
 export interface StockWriteoffResponse {
@@ -56,6 +52,7 @@ export interface StockWriteoffResponse {
   note: string | null;
   writeoffDate: string;
   valuationAmount: string;
+  stockType: "standard" | "live" | "dressed";
 }
 
 /** Mirrors InventoryService.getBalance return shape */
@@ -65,6 +62,41 @@ export interface StockBalance {
   departmentId: string;
   quantityKg: string;
   wac: string;
+  stockType: "standard" | "live" | "dressed";
+}
+
+export interface ShopStockPools {
+  live: StockBalance;
+  dressed: StockBalance;
+}
+
+export interface DressingBatch {
+  id: string;
+  departmentId: string;
+  liveWeightKg: string;
+  dressedWeightKg: string;
+  shrinkageKg: string;
+  liveWacAtProcessing: string;
+  dressedCostPerKg: string;
+  processingLossAmount: string;
+  batchDate: string;
+  notes?: string;
+}
+
+export interface CreateDressingBatchRequest {
+  liveWeightKg: number;
+  dressedWeightKg: number;
+  batchDate: string;
+  notes?: string;
+}
+
+export interface ProcessingYield {
+  liveWeightKg: string;
+  dressedWeightKg: string;
+  shrinkageKg: string;
+  yieldPercentage: string;
+  processingLossAmount: string;
+  batchCount: number;
 }
 
 /** Mirrors FreshChickenShopService.getProfitLoss return — single set, no grossProfit */
@@ -78,6 +110,6 @@ export interface ProfitLossReport {
 
 export type SaleResponse = ApiResponse<ShopSale>;
 export type SalesResponse = ApiResponse<ShopSale[]>;
-export type StockResponse = ApiResponse<StockBalance>;
+export type StockResponse = ApiResponse<ShopStockPools>;
 export type WriteoffResponse = ApiResponse<StockWriteoffResponse>;
 export type ProfitLossResponse = ApiResponse<ProfitLossReport>;

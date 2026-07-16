@@ -262,6 +262,7 @@ describe("partiesApi — query builders", () => {
         partiesApi.endpoints.createParty.initiate({
           name: "Test Farm",
           partyType: PartyType.FARM,
+          departmentIds: ["department-supply"],
         }),
       );
       expect(captured[0].url).toBe("/parties");

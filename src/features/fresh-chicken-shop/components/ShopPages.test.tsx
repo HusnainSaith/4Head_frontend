@@ -38,15 +38,12 @@ const {
       partyType: "customer",
     },
     customerPartyId: "c1",
-    liveWeightKg: "6.000",
-    dressedWeightKg: "5.000",
-    shrinkageKg: "1.000",
+    quantityKg: "5.000",
     ratePerKg: "350.00",
     wacAtSale: "290.0000",
     totalAmount: "1750.00",
     cogsAmount: "1450.00",
-    processingLossAmount: "290.00",
-    grossProfitAmount: "10.00",
+    profitMarginPerKg: "60.00",
     paymentMethod: "cash" as const,
     amountReceived: "1750.00",
     outstandingAmount: "0.00",
@@ -68,11 +65,22 @@ const {
     transferDate: "2026-07-10",
   },
   mockStock: {
-    id: "sb1",
-    productId: "p1",
-    departmentId: "dept1",
-    quantityKg: "42.500",
-    wac: "290.00",
+    live: {
+      id: "live1",
+      productId: "p1",
+      departmentId: "dept1",
+      stockType: "live",
+      quantityKg: "42.500",
+      wac: "290.00",
+    },
+    dressed: {
+      id: "dressed1",
+      productId: "p1",
+      departmentId: "dept1",
+      stockType: "dressed",
+      quantityKg: "30.000",
+      wac: "300.00",
+    },
   },
   mockReport: {
     revenue: "50000.00",
@@ -171,17 +179,17 @@ describe("ShopSalesPage", () => {
       unwrap: () => Promise.resolve({ data: mockSale }),
     });
   });
-  it("renders live, dressed, and backend-derived processing values", () => {
+  it("renders dressed quantity and backend-derived margin", () => {
     wrap(<ShopSalesPage />);
     expect(screen.getByText("Walk-in Customer")).toBeInTheDocument();
-    expect(screen.getByText("6.000 / 5.000 kg")).toBeInTheDocument();
-    expect(screen.getByText(/1.000 kg/)).toBeInTheDocument();
+    expect(screen.getByText("5.000 kg")).toBeInTheDocument();
+    expect(screen.getByText(/60/)).toBeInTheDocument();
   });
 
   it("opens record sale dialog with stock hint", () => {
     wrap(<ShopSalesPage />);
     fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
-    expect(screen.getByText(/Available stock: 42.500 kg/i)).toBeInTheDocument();
+    expect(screen.getByText(/Available stock: 30.000 kg/i)).toBeInTheDocument();
   });
 
   it("requests customers within the backend pagination limit", () => {
@@ -194,17 +202,14 @@ describe("ShopSalesPage", () => {
     );
   });
 
-  it("shows insufficient-stock error when live weight exceeds available", () => {
+  it("shows insufficient-stock error when dressed quantity exceeds available", () => {
     wrap(<ShopSalesPage />);
     fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
-    const liveInput = screen.getByLabelText(/live weight pulled/i);
-    fireEvent.change(liveInput, { target: { value: "999" } });
-    fireEvent.change(screen.getByLabelText(/dressed weight sold/i), {
-      target: { value: "500" },
-    });
+    const quantityInput = screen.getByLabelText(/dressed quantity/i);
+    fireEvent.change(quantityInput, { target: { value: "999" } });
     const rateInput = screen.getByLabelText(/sale rate per dressed kg/i);
     fireEvent.change(rateInput, { target: { value: "300" } });
-    fireEvent.submit(liveInput.closest("form")!);
+    fireEvent.submit(quantityInput.closest("form")!);
     expect(screen.getByText(/insufficient stock/i)).toBeInTheDocument();
   });
 
@@ -215,31 +220,25 @@ describe("ShopSalesPage", () => {
     expect(screen.getByPlaceholderText(/customer name/i)).toBeInTheDocument();
   });
 
-  it("submits only raw live-to-dressed inputs and renders the WAC preview", () => {
+  it("submits dressed-sale inputs and renders the backend-WAC preview", () => {
     wrap(<ShopSalesPage />);
     fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
-    fireEvent.change(screen.getByLabelText(/live weight pulled/i), {
-      target: { value: "40" },
-    });
-    fireEvent.change(screen.getByLabelText(/dressed weight sold/i), {
+    fireEvent.change(screen.getByLabelText(/dressed quantity/i), {
       target: { value: "30" },
     });
     fireEvent.change(screen.getByLabelText(/sale rate per dressed kg/i), {
       target: { value: "480" },
     });
     expect(screen.getByText(/estimated break-even rate/i)).toBeInTheDocument();
-    expect(screen.getByText(/2,800/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(mockCreateShopSale).toHaveBeenCalledWith(
       expect.objectContaining({
-        liveWeightKg: 40,
-        dressedWeightKg: 30,
+        quantityKg: 30,
         ratePerKg: 480,
       }),
     );
     const submitted = mockCreateShopSale.mock.calls[0]?.[0];
-    expect(submitted).not.toHaveProperty("shrinkageKg");
-    expect(submitted).not.toHaveProperty("grossProfitAmount");
+    expect(submitted).not.toHaveProperty("profitMarginPerKg");
   });
 });
 
@@ -248,6 +247,7 @@ describe("ShopStockPage", () => {
   it("renders stock stats and caption about internal transfers", () => {
     wrap(<ShopStockPage />);
     expect(screen.getByText("42.500 kg")).toBeInTheDocument();
+    expect(screen.getByText("30.000 kg")).toBeInTheDocument();
     expect(
       screen.getByText(/internal transfers from Supply/i),
     ).toBeInTheDocument();

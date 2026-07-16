@@ -10,6 +10,9 @@ import type {
   StockWriteoffRequest,
   UpdateSaleRequest,
   WriteoffResponse,
+  DressingBatch,
+  CreateDressingBatchRequest,
+  ProcessingYield,
 } from "./types";
 
 const clean = (p: Record<string, unknown>) =>
@@ -24,6 +27,12 @@ const saleRefresh = [
   { type: "DepartmentBalance" as const, id: "LIST" },
   { type: "ConsolidatedReport" as const, id: "PROFIT_LOSS" },
   { type: "ConsolidatedReport" as const, id: "DEPARTMENTS" },
+];
+const batchRefresh = [
+  { type: "DressingBatch" as const, id: "LIST" },
+  { type: "FreshChickenStock" as const, id: "CURRENT" },
+  { type: "Expense" as const, id: "LIST" },
+  { type: "ShopReport" as const, id: "PROFIT_LOSS" },
 ];
 const writeoffRefresh = [
   { type: "FreshChickenStock" as const, id: "CURRENT" },
@@ -88,6 +97,64 @@ export const shopApi = apiSlice.injectEndpoints({
       query: (body) => ({ url: "/shop/stock/writeoffs", method: "POST", body }),
       invalidatesTags: writeoffRefresh,
     }),
+    listDressingBatches: builder.query<
+      ApiResponse<DressingBatch[]>,
+      { from?: string; to?: string } | void
+    >({
+      query: (params) => ({
+        url: "/shop/dressing-batches",
+        params: params ? clean(params) : undefined,
+      }),
+      providesTags: (result) => [
+        { type: "DressingBatch", id: "LIST" },
+        ...(result?.data.map(({ id }) => ({
+          type: "DressingBatch" as const,
+          id,
+        })) ?? []),
+      ],
+    }),
+    createDressingBatch: builder.mutation<
+      ApiResponse<DressingBatch>,
+      CreateDressingBatchRequest
+    >({
+      query: (body) => ({
+        url: "/shop/dressing-batches",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: batchRefresh,
+    }),
+    updateDressingBatch: builder.mutation<
+      ApiResponse<DressingBatch>,
+      { id: string; notes?: string }
+    >({
+      query: ({ id, ...body }) => ({
+        url: `/shop/dressing-batches/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "DressingBatch", id },
+        { type: "DressingBatch", id: "LIST" },
+      ],
+    }),
+    deleteDressingBatch: builder.mutation<ApiResponse<void>, string>({
+      query: (id) => ({
+        url: `/shop/dressing-batches/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: batchRefresh,
+    }),
+    getProcessingYield: builder.query<
+      ApiResponse<ProcessingYield>,
+      { from?: string; to?: string } | void
+    >({
+      query: (params) => ({
+        url: "/shop/reports/processing-yield",
+        params: params ? clean(params) : undefined,
+      }),
+      providesTags: [{ type: "DressingBatch", id: "YIELD" }],
+    }),
 
     getShopProfitLoss: builder.query<
       ProfitLossResponse,
@@ -113,4 +180,9 @@ export const {
   useGetShopStockQuery,
   useCreateShopStockWriteoffMutation,
   useGetShopProfitLossQuery,
+  useListDressingBatchesQuery,
+  useCreateDressingBatchMutation,
+  useUpdateDressingBatchMutation,
+  useDeleteDressingBatchMutation,
+  useGetProcessingYieldQuery,
 } = shopApi;

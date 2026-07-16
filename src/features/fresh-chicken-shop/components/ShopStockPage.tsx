@@ -49,7 +49,7 @@ export function ShopStockPage() {
       </PageContainer>
     );
 
-  const stock = query.data.data;
+  const { live, dressed } = query.data.data;
 
   return (
     <PageContainer>
@@ -62,10 +62,12 @@ export function ShopStockPage() {
         }
       />
       <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard label="Quantity" value={`${stock.quantityKg} kg`} />
+        <StatCard label="Live stock" value={`${live.quantityKg} kg`} />
+        <StatCard label="Live WAC" value={money.format(Number(live.wac))} />
+        <StatCard label="Dressed stock" value={`${dressed.quantityKg} kg`} />
         <StatCard
-          label="Weighted average cost"
-          value={money.format(Number(stock.wac))}
+          label="Dressed WAC"
+          value={money.format(Number(dressed.wac))}
         />
       </div>
       <p className="text-sm text-muted-foreground mt-2">
@@ -75,12 +77,24 @@ export function ShopStockPage() {
       </p>
       <StockWriteoffDialog
         open={open}
-        availableKg={stock.quantityKg}
+        availableKg={live.quantityKg}
+        stockOptions={[
+          { value: "live", label: "Live stock", availableKg: live.quantityKg },
+          {
+            value: "dressed",
+            label: "Dressed stock",
+            availableKg: dressed.quantityKg,
+          },
+        ]}
         loading={state.isLoading}
         onClose={() => setOpen(false)}
         onSubmit={async (body) => {
           try {
-            const result = await writeoff(body).unwrap();
+            if (!body.stockType) throw new Error("Select a stock pool");
+            const result = await writeoff({
+              ...body,
+              stockType: body.stockType,
+            }).unwrap();
             toast.success(
               `Write-off recorded: ${money.format(Number(result.data.valuationAmount))}`,
             );

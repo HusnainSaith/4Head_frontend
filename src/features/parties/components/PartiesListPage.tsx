@@ -145,6 +145,31 @@ export function PartiesListPage() {
             : "—"),
       },
       {
+        id: "linkedDepartments",
+        header: "Linked departments",
+        cell: (party) => {
+          const linked = party.departments?.length
+            ? party.departments
+            : [party.primaryDepartment, party.linkedDepartment].filter(
+                (department): department is { id: string; name: string } =>
+                  Boolean(department),
+              );
+          return linked.length ? (
+            <div className="flex flex-wrap gap-1">
+              {linked.map((department) => (
+                <Badge key={department.id} variant="secondary">
+                  {department.name ??
+                    departmentNameById.get(department.id) ??
+                    "Department"}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            "â€”"
+          );
+        },
+      },
+      {
         id: "actions",
         header: "Actions",
         align: "right",

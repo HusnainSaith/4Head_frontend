@@ -34,6 +34,7 @@ export interface StockWriteoffInput {
   reason: StockWriteoffReason;
   note?: string;
   writeoffDate: string;
+  stockType?: "live" | "dressed";
 }
 
 const schema = z.object({
@@ -41,6 +42,7 @@ const schema = z.object({
   reason: z.enum(stockWriteoffReasons),
   note: z.string().max(255, "Note must be 255 characters or fewer.").optional(),
   writeoffDate: z.string().min(1, "Date is required."),
+  stockType: z.enum(["live", "dressed"]).optional(),
 });
 
 export function StockWriteoffDialog({
@@ -49,18 +51,30 @@ export function StockWriteoffDialog({
   loading,
   onClose,
   onSubmit,
+  stockOptions,
 }: {
   open: boolean;
   availableKg: string;
   loading: boolean;
   onClose: () => void;
   onSubmit: (body: StockWriteoffInput) => Promise<void>;
+  stockOptions?: Array<{
+    value: "live" | "dressed";
+    label: string;
+    availableKg: string;
+  }>;
 }) {
   const [quantity, setQuantity] = useState("");
   const [reason, setReason] = useState<StockWriteoffReason>("spoilage");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [stockType, setStockType] = useState<"live" | "dressed">(
+    stockOptions?.[0]?.value ?? "live",
+  );
+  const effectiveAvailable =
+    stockOptions?.find((option) => option.value === stockType)?.availableKg ??
+    availableKg;
 
   const reset = () => {
     setQuantity("");
@@ -68,6 +82,7 @@ export function StockWriteoffDialog({
     setDate(new Date().toISOString().slice(0, 10));
     setNote("");
     setError("");
+    setStockType(stockOptions?.[0]?.value ?? "live");
   };
 
   const handleClose = () => {
@@ -81,8 +96,8 @@ export function StockWriteoffDialog({
         <DialogHeader>
           <DialogTitle>Add Shrinkage</DialogTitle>
           <DialogDescription>
-            Available: {availableKg} kg. The server validates stock and values
-            the loss at the locked current WAC.
+            Available: {effectiveAvailable} kg. The server validates stock and
+            values the loss at the locked current WAC.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -94,13 +109,16 @@ export function StockWriteoffDialog({
               reason,
               writeoffDate: date,
               note: note.trim() || undefined,
+              stockType: stockOptions ? stockType : undefined,
             });
             if (!parsed.success) {
               setError(parsed.error.issues[0]?.message ?? "Check the form.");
               return;
             }
-            if (parsed.data.quantityKg > Number(availableKg)) {
-              setError(`Insufficient stock. Available: ${availableKg} kg.`);
+            if (parsed.data.quantityKg > Number(effectiveAvailable)) {
+              setError(
+                `Insufficient stock. Available: ${effectiveAvailable} kg.`,
+              );
               return;
             }
             setError("");
@@ -113,13 +131,36 @@ export function StockWriteoffDialog({
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : null}
+          {stockOptions ? (
+            <div className="space-y-1.5">
+              <Label>Stock pool *</Label>
+              <Select
+                value={stockType}
+                onValueChange={(value) => {
+                  setStockType(value as "live" | "dressed");
+                  setError("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {stockOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label} ({option.availableKg} kg)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
           <div className="space-y-1.5">
             <Label htmlFor="shrinkage-quantity">Quantity (kg) *</Label>
             <Input
               id="shrinkage-quantity"
               type="number"
               min="0.001"
-              max={availableKg}
+              max={effectiveAvailable}
               step="0.001"
               required
               value={quantity}
