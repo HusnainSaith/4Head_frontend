@@ -12,6 +12,9 @@ import { ShopStockPage } from "./ShopStockPage";
 vi.mock("@/features/parties/components/DepartmentBalancesPanel", () => ({
   DepartmentBalancesPanel: () => null,
 }));
+vi.mock("@/features/vehicles/components/DepartmentVehicleSelect", () => ({
+  DepartmentVehicleSelect: () => null,
+}));
 import { ShopReportPage } from "./ShopReportPage";
 
 const {

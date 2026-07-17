@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { useLazyGetInvoiceQuery } from "../invoicesApi";
 import { InvoicePrintView } from "./InvoicePrintView";
 
@@ -34,9 +35,9 @@ export function usePrintInvoice() {
           printWindow.close();
         }, 250);
         toast.success("Invoice ready to print");
-      } catch {
+      } catch (error) {
         printWindow.close();
-        toast.error("Invoice could not be loaded");
+        toast.error(getApiErrorMessage(error));
       } finally {
         setIsPrinting(false);
       }

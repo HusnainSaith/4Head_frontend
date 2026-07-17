@@ -105,6 +105,7 @@ export function EmployeeDetailPage({
       <PageContainer>
         <ErrorState
           title="Employee details could not be loaded"
+          error={employee.error ?? advances.error ?? bonuses.error}
           onRetry={() => {
             void employee.refetch();
             if (!skipAdvances) {

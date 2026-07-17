@@ -56,6 +56,7 @@ export function StockSummaryPage() {
       {q.isError ? (
         <ErrorState
           title="Stock summary could not be loaded"
+          error={q.error}
           onRetry={() => void q.refetch()}
         />
       ) : (

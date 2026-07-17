@@ -107,7 +107,10 @@ describe("LoginPage", () => {
   });
 
   it("shows the backend authentication error inline", async () => {
-    hookState.loginError = { status: 401 };
+    hookState.loginError = {
+      status: 401,
+      data: { message: "Invalid email or password." },
+    };
     renderLogin();
 
     expect(

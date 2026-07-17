@@ -43,6 +43,7 @@ import { DepartmentBalancesPanel } from "@/features/parties/components/Departmen
 import { InvoiceButton } from "@/features/invoices/components/InvoiceButton";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { DepartmentCode, Role } from "@/types/enums";
+import { DepartmentVehicleSelect } from "@/features/vehicles/components/DepartmentVehicleSelect";
 import {
   useCreateShopSaleMutation,
   useDeleteShopSaleMutation,
@@ -118,6 +119,11 @@ const columns: DataTableColumn<ShopSale>[] = [
     header: "Initial receivable",
     cell: (r) => money.format(Number(r.outstandingAmount)),
     align: "right",
+  },
+  {
+    id: "vehicle",
+    header: "Vehicle",
+    cell: (r) => r.vehicle?.registrationNumber ?? "â€”",
   },
   {
     id: "date",
@@ -273,6 +279,7 @@ function SaleDialog({
   const [amountReceived, setAmountReceived] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
+  const [vehicleId, setVehicleId] = useState("");
   const [formError, setFormError] = useState("");
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newName, setNewName] = useState("");
@@ -293,6 +300,7 @@ function SaleDialog({
     setAmountReceived("");
     setDate(new Date().toISOString().slice(0, 10));
     setNotes("");
+    setVehicleId("");
     setFormError("");
     setShowNewCustomer(false);
     setNewName("");
@@ -364,6 +372,7 @@ function SaleDialog({
     }
     void onSubmit({
       customerPartyId: customerId || undefined,
+      vehicleId: vehicleId || undefined,
       quantityKg,
       ratePerKg: r,
       paymentMethod: method,
@@ -531,6 +540,15 @@ function SaleDialog({
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Vehicle</Label>
+            <DepartmentVehicleSelect
+              departmentCode={DepartmentCode.FRESH_CHICKEN_SHOP}
+              value={vehicleId}
+              onChange={setVehicleId}
             />
           </div>
 

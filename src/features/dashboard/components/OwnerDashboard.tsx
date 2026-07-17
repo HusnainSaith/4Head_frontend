@@ -68,6 +68,13 @@ export function OwnerDashboard() {
     return (
       <ErrorState
         title="Dashboard data is unavailable"
+        error={
+          profit.error ??
+          balances.error ??
+          departmentProfit.error ??
+          stock.error ??
+          departments.error
+        }
         onRetry={() => {
           void profit.refetch();
           void balances.refetch();

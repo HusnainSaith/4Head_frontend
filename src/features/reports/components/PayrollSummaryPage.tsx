@@ -54,6 +54,7 @@ export function PayrollSummaryPage() {
       {q.isError ? (
         <ErrorState
           title="Payroll summary could not be loaded"
+          error={q.error}
           onRetry={() => void q.refetch()}
         />
       ) : (

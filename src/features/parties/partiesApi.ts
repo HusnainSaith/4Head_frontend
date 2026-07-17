@@ -85,6 +85,11 @@ export const partiesApi = apiSlice.injectEndpoints({
         { type: "Party", id: "LIST" },
         { type: "PartyStatement", id },
         { type: "DepartmentBalance", id: "LIST" },
+        { type: "BrokerageSale", id: "LIST" },
+        { type: "SupplyPurchase", id: "LIST" },
+        { type: "BrokerageReport", id: "PROFIT_LOSS" },
+        { type: "SupplyReport", id: "PROFIT_LOSS" },
+        { type: "ConsolidatedReport", id: "PROFIT_LOSS" },
       ],
     }),
     getDepartmentBalances: builder.query<

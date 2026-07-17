@@ -106,6 +106,7 @@ export function DressingBatchesPage() {
       <PageContainer>
         <ErrorState
           title="Dressing batches could not be loaded"
+          error={list.error ?? summary.error ?? stock.error}
           onRetry={() => {
             void list.refetch();
             void summary.refetch();

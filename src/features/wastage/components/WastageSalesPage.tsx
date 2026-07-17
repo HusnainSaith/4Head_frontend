@@ -119,7 +119,7 @@ export function WastageSalesPage() {
   });
   const departmentsQuery = useListDepartmentsQuery();
   const wastageDepartmentId = departmentsQuery.data?.data.find(
-    (item) => item.type === DepartmentCode.WASTAGE,
+    (item) => item.type.toLowerCase() === DepartmentCode.WASTAGE,
   )?.id;
   const vehiclesQuery = useListVehiclesQuery(
     wastageDepartmentId

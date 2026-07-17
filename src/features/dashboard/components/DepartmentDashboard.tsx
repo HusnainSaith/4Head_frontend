@@ -61,6 +61,7 @@ export function DepartmentDashboard() {
     return (
       <ErrorState
         title="Department dashboard is unavailable"
+        error={stock.error ?? balances.error}
         onRetry={() => {
           void stock.refetch();
           void balances.refetch();

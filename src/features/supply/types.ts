@@ -7,7 +7,7 @@ export type TransactionStatus = "posted" | "cancelled";
 export type SettlementStatus = "unsettled" | "partially_settled" | "settled";
 export interface Pagination { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean; hasPreviousPage: boolean }
 interface TransactionBase { id: string; departmentId: string; partyId?: string; party?: Party; quantityKg: string; ratePerKg: string; totalAmount: string; paymentMethod: SupplyPaymentMethod; vehicleId?: string; vehicle?: VehicleOption; notes?: string; status: TransactionStatus; createdAt: string; updatedAt: string }
-export interface SupplyPurchase extends TransactionBase { amountPaid: string; outstandingAmount: string; purchaseDate: string }
+export interface SupplyPurchase extends TransactionBase { amountPaid: string; outstandingAmount: string; purchaseDate: string; sourceBrokerageSaleId?: string }
 export interface SupplySale extends TransactionBase { commissionPerKg: string; amountReceived: string; outstandingAmount: string; saleDate: string }
 export interface CreatePurchaseRequest { partyId?: string; quantityKg: number; ratePerKg: number; paymentMethod: SupplyPaymentMethod; amountPaid?: number; purchaseDate: string; vehicleId?: string; notes?: string }
 export interface CreateSaleRequest { partyId?: string; quantityKg: number; ratePerKg: number; paymentMethod: SupplyPaymentMethod; amountReceived?: number; saleDate: string; vehicleId?: string; notes?: string }

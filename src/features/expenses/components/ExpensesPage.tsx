@@ -110,6 +110,7 @@ export function ExpensesPage() {
       <PageContainer>
         <ErrorState
           title="Expenses could not be loaded"
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       </PageContainer>

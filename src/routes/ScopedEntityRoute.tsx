@@ -18,6 +18,7 @@ interface EntityAccessProps {
   departmentId?: string | null;
   isLoading: boolean;
   isError: boolean;
+  error?: unknown;
   onRetry: () => void;
 }
 
@@ -26,6 +27,7 @@ function EntityAccess({
   departmentId,
   isLoading,
   isError,
+  error,
   onRetry,
 }: EntityAccessProps) {
   const role = useSelector(selectUserRole);
@@ -35,7 +37,11 @@ function EntityAccess({
   if (isError)
     return (
       <PageContainer>
-        <ErrorState title="Record could not be loaded" onRetry={onRetry} />
+        <ErrorState
+          title="Record could not be loaded"
+          error={error}
+          onRetry={onRetry}
+        />
       </PageContainer>
     );
 
@@ -64,6 +70,7 @@ export function VehicleEntityRoute({ children }: { children: ReactNode }) {
       departmentId={query.data?.data.departmentId}
       isLoading={query.isLoading}
       isError={!id || query.isError || (!query.isLoading && !query.data)}
+      error={query.error}
       onRetry={() => void query.refetch()}
     >
       {children}
@@ -79,6 +86,7 @@ export function EmployeeEntityRoute({ children }: { children: ReactNode }) {
       departmentId={query.data?.data.departmentId}
       isLoading={query.isLoading}
       isError={!id || query.isError || (!query.isLoading && !query.data)}
+      error={query.error}
       onRetry={() => void query.refetch()}
     >
       {children}
@@ -94,6 +102,7 @@ export function PartyEntityRoute({ children }: { children: ReactNode }) {
       departmentId={query.data?.data.primaryDepartmentId}
       isLoading={query.isLoading}
       isError={!id || query.isError || (!query.isLoading && !query.data)}
+      error={query.error}
       onRetry={() => void query.refetch()}
     >
       {children}

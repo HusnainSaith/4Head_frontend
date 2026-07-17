@@ -45,7 +45,11 @@ export function SalaryRunDetailPage() {
   if (query.isError || !query.data)
     return (
       <PageContainer>
-        <ErrorState title="Salary run could not be loaded" />
+        <ErrorState
+          title="Salary run could not be loaded"
+          error={query.error}
+          onRetry={() => void query.refetch()}
+        />
       </PageContainer>
     );
   const run = query.data.data;

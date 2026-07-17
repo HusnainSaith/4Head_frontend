@@ -67,6 +67,7 @@ describe("shopApi contracts", () => {
       ratePerKg: 300,
       paymentMethod: "cash" as const,
       saleDate: "2026-07-12",
+      vehicleId: "shop-vehicle-1",
     };
     await dispatch(api.endpoints.createShopSale.initiate(body));
     expect(requests.find((r) => r.method === "POST")).toMatchObject({
@@ -74,8 +75,7 @@ describe("shopApi contracts", () => {
       method: "POST",
       body,
     });
-    // No vehicleId in shop sale DTO
-    expect(body).not.toHaveProperty("vehicleId");
+    expect(body.vehicleId).toBe("shop-vehicle-1");
   });
 
   it("updates and deletes sales", async () => {

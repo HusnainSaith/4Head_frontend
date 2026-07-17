@@ -1,5 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 
 export interface ErrorStateProps {
@@ -7,6 +8,8 @@ export interface ErrorStateProps {
   title?: string;
   /** Optional detail (e.g. server message or a generic hint). */
   description?: string;
+  /** Raw RTK Query/backend error. Used when no explicit description is given. */
+  error?: unknown;
   /** Retry handler — when provided, renders a Retry button. */
   onRetry?: () => void;
   className?: string;
@@ -18,11 +21,17 @@ export interface ErrorStateProps {
  * bare red string (Task 0 three-states rule).
  */
 export function ErrorState({
-  title = "Something went wrong",
-  description = "We couldn't complete this action. Please try again.",
+  title = "Request failed",
+  description,
+  error,
   onRetry,
   className,
 }: ErrorStateProps) {
+  const resolvedDescription =
+    description ??
+    (error !== undefined
+      ? getApiErrorMessage(error)
+      : "The request could not be completed. Please try again.");
   return (
     <div
       role="alert"
@@ -36,9 +45,9 @@ export function ErrorState({
       </div>
       <div className="space-y-1">
         <p className="text-sm font-medium text-foreground">{title}</p>
-        {description ? (
+        {resolvedDescription ? (
           <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-            {description}
+            {resolvedDescription}
           </p>
         ) : null}
       </div>

@@ -79,6 +79,10 @@ vi.mock("../brokerageApi", () => ({
 }));
 
 describe("Brokerage transaction balances", () => {
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
   beforeEach(() => {
     createPurchase.mockReset();
     createSale.mockReset();
@@ -120,6 +124,39 @@ describe("Brokerage transaction balances", () => {
     await waitFor(() =>
       expect(createSale).toHaveBeenCalledWith(
         expect.objectContaining({ amountReceived: 100, quantityKg: 5 }),
+      ),
+    );
+  });
+
+  it("records a Supply destination with an initial received amount", async () => {
+    createSale.mockReturnValue({ unwrap: () => Promise.resolve({}) });
+    render(<BrokerageTransactionsPage kind="sale" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /record sale/i }));
+    fireEvent.click(screen.getAllByRole("combobox")[0]);
+    fireEvent.click(
+      await screen.findByRole("option", {
+        name: /supply department \(automatic transfer\)/i,
+      }),
+    );
+
+    expect(screen.queryByLabelText("Buyer")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Amount received")).toBeInTheDocument();
+    const numbers = screen.getAllByRole("spinbutton");
+    fireEvent.change(numbers[0], { target: { value: "12" } });
+    fireEvent.change(numbers[1], { target: { value: "325" } });
+    fireEvent.change(numbers[2], { target: { value: "900" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(createSale).toHaveBeenCalledWith(
+        expect.objectContaining({
+          destinationType: "supply",
+          quantityKg: 12,
+          ratePerKg: 325,
+          paymentMethod: "credit",
+          amountReceived: 900,
+        }),
       ),
     );
   });

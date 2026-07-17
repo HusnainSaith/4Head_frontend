@@ -116,6 +116,7 @@ export function VehicleMaintenanceLogsPage() {
       <PageContainer>
         <ErrorState
           title="Maintenance logs could not be loaded"
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       </PageContainer>

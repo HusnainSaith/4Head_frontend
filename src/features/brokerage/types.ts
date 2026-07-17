@@ -44,6 +44,7 @@ export interface BrokeragePurchase extends BrokerageBase {
 }
 
 export interface BrokerageSale extends BrokerageBase {
+  destinationType: "external" | "supply";
   commissionPerKg: string;
   commissionAmount: string;
   amountReceived: string;
@@ -109,6 +110,7 @@ export interface CreatePurchaseRequest {
 export type UpdatePurchaseRequest = Partial<CreatePurchaseRequest>;
 
 export interface CreateSaleRequest {
+  destinationType?: "external" | "supply";
   partyId?: string;
   vehicleId?: string;
   quantityKg: number;

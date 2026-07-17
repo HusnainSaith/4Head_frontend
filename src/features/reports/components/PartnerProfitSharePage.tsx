@@ -25,6 +25,7 @@ export function PartnerProfitSharePage() {
       {q.isError || !q.data ? (
         <ErrorState
           title="Partner profit share could not be loaded"
+          error={q.error}
           onRetry={() => void q.refetch()}
         />
       ) : (

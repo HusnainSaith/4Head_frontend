@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   Select,
   SelectContent,
@@ -144,7 +145,7 @@ export function RunPayrollPage() {
                   toast.error(
                     `A salary run for ${employee?.fullName ?? "this employee"} for ${month}/${year} already exists`,
                   );
-                else toast.error("Payroll could not be run");
+                else toast.error(getApiErrorMessage(error));
               }
             }}
           >

@@ -56,6 +56,7 @@ export function OutstandingBalancesPage() {
       {q.isError ? (
         <ErrorState
           title="Balances could not be loaded"
+          error={q.error}
           onRetry={() => void q.refetch()}
         />
       ) : (

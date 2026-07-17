@@ -77,6 +77,7 @@ export function ExpenseBreakdownPage() {
       {q.isError ? (
         <ErrorState
           title="Expense breakdown could not be loaded"
+          error={q.error}
           onRetry={() => void q.refetch()}
         />
       ) : (

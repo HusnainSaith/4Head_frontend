@@ -7,6 +7,8 @@ export interface ShopSale {
   departmentId: string;
   customerPartyId?: string | null;
   customerParty?: { id: string; name: string; partyType: string } | null;
+  vehicleId?: string | null;
+  vehicle?: { id: string; registrationNumber: string } | null;
   quantityKg: string;
   ratePerKg: string;
   wacAtSale: string;
@@ -25,6 +27,7 @@ export interface ShopSale {
 /** Mirrors CreateShopSaleDto. Derived amounts are backend-owned. */
 export interface CreateSaleRequest {
   customerPartyId?: string;
+  vehicleId?: string;
   quantityKg: number;
   ratePerKg: number;
   paymentMethod: "cash" | "bank" | "credit";

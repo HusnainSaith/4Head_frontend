@@ -126,6 +126,7 @@ export function VehicleFuelLogsPage() {
       <PageContainer>
         <ErrorState
           title="Fuel logs could not be loaded"
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       </PageContainer>

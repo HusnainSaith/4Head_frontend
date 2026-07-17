@@ -23,10 +23,12 @@ export function DepartmentVehicleSelect({
 }) {
   const departments = useListDepartmentsQuery();
   const department = departments.data?.data.find(
-    (item) => item.type === departmentCode,
+    (item) => item.type.toLowerCase() === departmentCode,
   );
   const vehicles = useListVehiclesQuery(
-    department ? { departmentId: department.id, page: 1, limit: 100 } : undefined,
+    department
+      ? { departmentId: department.id, page: 1, limit: 100 }
+      : undefined,
     { skip: !department },
   );
 
@@ -40,7 +42,9 @@ export function DepartmentVehicleSelect({
     >
       <SelectTrigger id={id}>
         <SelectValue
-          placeholder={department ? "Select vehicle" : "Vehicle department unavailable"}
+          placeholder={
+            department ? "Select vehicle" : "Vehicle department unavailable"
+          }
         />
       </SelectTrigger>
       <SelectContent>

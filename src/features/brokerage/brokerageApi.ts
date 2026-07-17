@@ -120,6 +120,9 @@ export const brokerageApi = apiSlice.injectEndpoints({
       query: (body) => ({ url: "/brokerage/sales", method: "POST", body }),
       invalidatesTags: [
         { type: "BrokerageSale", id: "LIST" },
+        { type: "SupplyPurchase", id: "LIST" },
+        { type: "SupplyStock", id: "CURRENT" },
+        { type: "SupplyReport", id: "PROFIT_LOSS" },
         ...refreshTransactionState,
       ],
     }),
@@ -143,6 +146,9 @@ export const brokerageApi = apiSlice.injectEndpoints({
       invalidatesTags: (_r, _e, id) => [
         { type: "BrokerageSale", id },
         { type: "BrokerageSale", id: "LIST" },
+        { type: "SupplyPurchase", id: "LIST" },
+        { type: "SupplyStock", id: "CURRENT" },
+        { type: "SupplyReport", id: "PROFIT_LOSS" },
         ...refreshTransactionState,
       ],
     }),

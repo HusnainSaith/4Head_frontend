@@ -20,7 +20,7 @@ export function BrokerageStockPage() {
   const [writeoff, state] = useCreateBrokerageStockWriteoffMutation();
   const canWrite = role === Role.OWNER || role === Role.ACCOUNTANT || (role === Role.DEPARTMENT_STAFF && department === DepartmentCode.BROKERAGE);
   if (query.isLoading) return <PageSkeleton rows={3} />;
-  if (query.isError || !query.data?.data) return <PageContainer><ErrorState title="Brokerage stock could not be loaded" onRetry={() => void query.refetch()} /></PageContainer>;
+  if (query.isError || !query.data?.data) return <PageContainer><ErrorState title="Brokerage stock could not be loaded" error={query.error} onRetry={() => void query.refetch()} /></PageContainer>;
   const stock = query.data.data;
   return <PageContainer><PageHeader title="Brokerage Stock" actions={canWrite ? <Button onClick={()=>setOpen(true)}>+ Add Shrinkage</Button> : undefined} />
     <div className="grid gap-4 sm:grid-cols-2"><StatCard label="Quantity" value={`${stock.quantityKg} kg`} /><StatCard label="Weighted average cost" value={money.format(Number(stock.wac))} /></div>

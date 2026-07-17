@@ -87,6 +87,7 @@ export function SupplyReportPage() {
       ) : query.isError || !data ? (
         <ErrorState
           title="Supply report could not be loaded"
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       ) : (

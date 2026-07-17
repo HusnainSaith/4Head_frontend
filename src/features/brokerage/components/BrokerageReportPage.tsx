@@ -58,6 +58,7 @@ export function BrokerageReportPage() {
       ) : query.isError || !query.data?.data ? (
         <ErrorState
           title="Report could not be loaded"
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       ) : (

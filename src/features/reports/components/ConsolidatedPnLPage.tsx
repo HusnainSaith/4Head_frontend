@@ -25,6 +25,7 @@ export function ConsolidatedPnLPage() {
       {q.isError || !q.data ? (
         <ErrorState
           title="Consolidated report could not be loaded"
+          error={q.error}
           onRetry={() => void q.refetch()}
         />
       ) : (

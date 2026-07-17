@@ -115,7 +115,9 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
       id: "party",
       header: kind === "purchase" ? "Broker" : "Shop owner",
       cell: (row) =>
-        row.partyId ? (
+        kind === "purchase" && (row as SupplyPurchase).sourceBrokerageSaleId ? (
+          <span className="font-medium">Brokerage department</span>
+        ) : row.partyId ? (
           <a
             className="font-medium text-primary hover:underline"
             href={`/parties/${row.partyId}`}
@@ -126,6 +128,18 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
           (row.party?.name ?? "—")
         ),
     },
+    ...(kind === "purchase"
+      ? [
+          {
+            id: "source",
+            header: "Source",
+            cell: (row: SupplyPurchase | SupplySale) =>
+              (row as SupplyPurchase).sourceBrokerageSaleId
+                ? "Automatic Brokerage transfer"
+                : "Manual",
+          },
+        ]
+      : []),
     {
       id: "quantity",
       header: "Quantity",
@@ -206,7 +220,11 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
                     label="Print"
                   />
                 ) : null}
-                {row.status === "posted" ? (
+                {row.status === "posted" &&
+                !(
+                  kind === "purchase" &&
+                  (row as SupplyPurchase).sourceBrokerageSaleId
+                ) ? (
                   <Button
                     size="sm"
                     variant="outline"
@@ -214,6 +232,11 @@ export function SupplyTransactionsPage({ kind }: { kind: Kind }) {
                   >
                     Cancel
                   </Button>
+                ) : kind === "purchase" &&
+                  (row as SupplyPurchase).sourceBrokerageSaleId ? (
+                  <span className="text-xs text-muted-foreground">
+                    Managed by Brokerage
+                  </span>
                 ) : null}
               </div>
             ),

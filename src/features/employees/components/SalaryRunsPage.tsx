@@ -94,6 +94,7 @@ export function SalaryRunsPage() {
       <PageContainer>
         <ErrorState
           title="Salary runs could not be loaded"
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       </PageContainer>

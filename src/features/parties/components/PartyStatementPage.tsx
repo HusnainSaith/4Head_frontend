@@ -383,6 +383,7 @@ export function PartyStatementPage() {
       <PageContainer>
         <ErrorState
           title="Statement could not be loaded"
+          error={partyQuery.error ?? fullStatementQuery.error}
           onRetry={() => {
             void partyQuery.refetch();
             void fullStatementQuery.refetch();

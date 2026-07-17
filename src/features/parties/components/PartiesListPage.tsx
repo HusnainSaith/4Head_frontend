@@ -205,6 +205,7 @@ export function PartiesListPage() {
       <PageContainer>
         <ErrorState
           title="Parties could not be loaded"
+          error={partiesQuery.error}
           onRetry={() => void partiesQuery.refetch()}
         />
       </PageContainer>

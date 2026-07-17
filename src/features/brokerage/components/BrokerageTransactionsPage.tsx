@@ -89,7 +89,10 @@ export function BrokerageTransactionsPage({ kind }: { kind: Kind }) {
       id: "party",
       header: kind === "purchase" ? "Seller (Farm)" : "Buyer",
       cell: (row) =>
-        row.partyId ? (
+        kind === "sale" &&
+        (row as BrokerageSale).destinationType === "supply" ? (
+          <span className="font-medium">Supply department</span>
+        ) : row.partyId ? (
           <a
             className="font-medium text-primary hover:underline"
             href={`/parties/${row.partyId}`}
@@ -194,6 +197,7 @@ export function BrokerageTransactionsPage({ kind }: { kind: Kind }) {
       <PageContainer>
         <ErrorState
           title={`${kind === "purchase" ? "Purchases" : "Sales"} could not be loaded`}
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       </PageContainer>
@@ -247,6 +251,7 @@ export function BrokerageTransactionsPage({ kind }: { kind: Kind }) {
                 saleDate: values.date,
                 vehicleId: values.vehicleId || undefined,
                 description: values.description || undefined,
+                destinationType: values.destinationType,
               }).unwrap();
             }
             toast.success(
@@ -282,6 +287,7 @@ export function BrokerageTransactionsPage({ kind }: { kind: Kind }) {
 }
 
 type FormValues = {
+  destinationType?: "external" | "supply";
   partyId?: string;
   quantityKg: number;
   ratePerKg: number;
@@ -306,6 +312,9 @@ function TransactionDialog({
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const [partyId, setPartyId] = useState("");
+  const [destinationType, setDestinationType] = useState<
+    "external" | "supply"
+  >("external");
   const [quantity, setQuantity] = useState("");
   const [rate, setRate] = useState("");
   const [paymentMethod, setPaymentMethod] =
@@ -326,6 +335,7 @@ function TransactionDialog({
 
   const handleClose = () => {
     setPartyId("");
+    setDestinationType("external");
     setQuantity("");
     setRate("");
     setPaymentMethod("cash");
@@ -370,7 +380,11 @@ function TransactionDialog({
     }
     const effectivePayment =
       enteredPayment ?? (paymentMethod === "cash" ? total : 0);
-    if (effectivePayment < total && !partyId) {
+    if (
+      destinationType !== "supply" &&
+      effectivePayment < total &&
+      !partyId
+    ) {
       setFormError("Select a party when an outstanding balance remains.");
       return;
     }
@@ -380,6 +394,7 @@ function TransactionDialog({
     }
     void onSubmit({
       partyId: partyId || undefined,
+      destinationType: kind === "sale" ? destinationType : undefined,
       quantityKg: q,
       ratePerKg: r,
       paymentAmount: enteredPayment,
@@ -415,6 +430,41 @@ function TransactionDialog({
             </Alert>
           ) : null}
 
+          {kind === "sale" ? (
+            <div className="space-y-1.5">
+              <Label>Destination</Label>
+              <Select
+                value={destinationType}
+                onValueChange={(value) => {
+                  const next = value as "external" | "supply";
+                  setDestinationType(next);
+                  if (next === "supply") {
+                    setPartyId("");
+                    setPaymentMethod("credit");
+                    setPaymentAmount("");
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="external">External buyer</SelectItem>
+                  <SelectItem value="supply">
+                    Supply department (automatic transfer)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {destinationType === "supply" ? (
+                <p className="text-xs text-muted-foreground">
+                  Saving will automatically create the Supply purchase and
+                  move the same stock into Supply at this rate.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {destinationType !== "supply" ? (
           <div className="space-y-1.5">
             <Label htmlFor={`${kind}-party`}>{partyLabel}</Label>
             <Select
@@ -436,7 +486,9 @@ function TransactionDialog({
               </SelectContent>
             </Select>
           </div>
+          ) : null}
 
+          <>
           <div className="space-y-1.5">
             <Label htmlFor={`${kind}-quantity`}>
               Quantity (kg) <span className="text-destructive">*</span>
@@ -467,6 +519,9 @@ function TransactionDialog({
             />
           </div>
 
+          </>
+
+          <>
           <div className="space-y-1.5">
             <Label>Payment method</Label>
             <Select
@@ -506,6 +561,7 @@ function TransactionDialog({
               balance is posted to the selected party.
             </p>
           </div>
+          </>
 
           <div className="space-y-1.5">
             <Label htmlFor={`${kind}-date`}>

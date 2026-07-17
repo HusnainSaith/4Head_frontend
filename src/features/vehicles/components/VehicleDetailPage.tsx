@@ -17,6 +17,7 @@ export function VehicleDetailPage() {
       <PageContainer>
         <ErrorState
           title="Vehicle details could not be loaded"
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       </PageContainer>

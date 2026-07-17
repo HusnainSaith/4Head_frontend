@@ -65,6 +65,7 @@ function VehicleLogDirectory({ kind }: { kind: "fuel" | "maintenance" }) {
       <PageContainer>
         <ErrorState
           title="Vehicles could not be loaded"
+          error={query.error}
           onRetry={() => void query.refetch()}
         />
       </PageContainer>

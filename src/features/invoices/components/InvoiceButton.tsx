@@ -2,6 +2,7 @@ import type { MouseEvent } from "react";
 import { Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   useEnsureInvoiceBySourceMutation,
   useLazyGetInvoiceBySourceQuery,
@@ -37,9 +38,9 @@ export function InvoiceButton({
         response.data ??
         (await ensureBySource({ sourceType, sourceId }).unwrap()).data;
       await printInvoice(invoice.id, printWindow);
-    } catch {
+    } catch (error) {
       printWindow.close();
-      toast.error("Invoice could not be generated for this transaction");
+      toast.error(getApiErrorMessage(error));
     }
   };
   return (
